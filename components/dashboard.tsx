@@ -149,22 +149,6 @@ export function Dashboard() {
 
           {/* Right: mute, choose audio, and test */}
           <div className="w-32 flex justify-end items-center gap-2">
-            <button
-              onClick={() => {
-                if (!audioSrc) return;
-                // ensure the audio element uses the current public audio
-                if (audioRef.current) {
-                  audioRef.current.src = audioSrc;
-                  audioRef.current.play().catch(() => {
-                    // autoplay might be blocked; ignore
-                  });
-                }
-              }}
-              className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Test sound
-            </button>
-
             {soundEnabled ? (
               <button
                 onClick={() => setSoundEnabled(false)}
