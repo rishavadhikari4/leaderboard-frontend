@@ -197,7 +197,6 @@ export function Dashboard() {
         <div className="md:border-r md:border-border/60">
           <SourceColumn
             title="Nest Nepal"
-            icon="/nestnepal.png"
             source="nest"
             transactions={grouped.nest}
           />
@@ -205,7 +204,6 @@ export function Dashboard() {
         <div className="md:border-r md:border-border/60 md:border-t-0 border-t border-border/60 md:pt-0 pt-6">
           <SourceColumn
             title="Nest SMS"
-            icon="/nestsms.png"
             source="sms"
             transactions={grouped.sms}
           />
@@ -213,7 +211,6 @@ export function Dashboard() {
         <div className="md:border-t-0 border-t border-border/60 md:pt-0 pt-6">
           <SourceColumn
             title="Babal Host"
-            icon="/babalhost.png"
             source="babal"
             transactions={grouped.babal}
           />

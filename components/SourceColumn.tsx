@@ -14,7 +14,6 @@ export interface Transaction {
 
 interface Props {
   title: string;
-  icon: string;
   source: "nest" | "sms" | "babal";
   transactions: Transaction[];
 }
@@ -43,9 +42,8 @@ const sourceClasses: Record<
   },
 };
 
-export function SourceColumn({ title, icon, source, transactions }: Props) {
+export function SourceColumn({ title, source, transactions }: Props) {
   const c = sourceClasses[source];
-  const isImageIcon = icon.startsWith("/");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   const parseAmount = (v: number | string | undefined) => {
@@ -97,24 +95,6 @@ export function SourceColumn({ title, icon, source, transactions }: Props) {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div
-              className={`flex-shrink-0 rounded-full overflow-hidden p-1 ${c.chip}`}
-            >
-              {isImageIcon ? (
-                <Image
-                  src={icon}
-                  alt={title}
-                  width={48}
-                  height={48}
-                  className="h-12 w-12 object-contain"
-                  priority={source === "sms"}
-                />
-              ) : (
-                <div className="h-10 w-10 flex items-center justify-center text-lg">
-                  {icon}
-                </div>
-              )}
-            </div>
             <div>
               <h2 className="text-lg font-semibold text-foreground">{title}</h2>
               <div className="text-xs text-muted-foreground mt-1">
@@ -175,21 +155,6 @@ export function SourceColumn({ title, icon, source, transactions }: Props) {
                 )}
 
                 <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${c.chip}`}
-                  >
-                    {isImageIcon ? (
-                      <Image
-                        src={icon}
-                        alt={title}
-                        width={36}
-                        height={36}
-                        className="object-contain"
-                      />
-                    ) : (
-                      <span className="text-sm">{icon}</span>
-                    )}
-                  </div>
                   <div className="min-w-0 text-left">
                     <div className="text-sm font-medium text-foreground truncate">
                       {g.admin_name}
