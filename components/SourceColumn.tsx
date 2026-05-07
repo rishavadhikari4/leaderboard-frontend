@@ -47,6 +47,7 @@ export function SourceColumn({ title, icon, source, transactions }: Props) {
   const c = sourceClasses[source];
   const isImageIcon = icon.startsWith("/");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+
   const parseAmount = (v: number | string | undefined) => {
     if (v == null) return 0;
     if (typeof v === "number") return v;
@@ -54,23 +55,6 @@ export function SourceColumn({ title, icon, source, transactions }: Props) {
     const parsed = parseFloat(cleaned);
     return Number.isFinite(parsed) ? parsed : 0;
   };
-
-  const groups = useMemo(() => {
-    const map = new Map<string, Transaction[]>();
-    transactions.forEach((t) => {
-      const key = t.admin_id || t.admin_name || t.invoice_id;
-      const arr = map.get(key) ?? [];
-      arr.push(t);
-      map.set(key, arr);
-    });
-    return Array.from(map.entries()).map(([key, txs]) => ({
-      key,
-      admin_id: txs[0].admin_id ?? key,
-      admin_name: txs[0].admin_name ?? "Unknown",
-      transactions: txs,
-      total: txs.reduce((s, t) => s + parseAmount(t.amount), 0),
-    }));
-  }, [transactions]);
 
   const formatAmount = (v: number | string | undefined) => {
     const num = parseAmount(v);
@@ -80,6 +64,26 @@ export function SourceColumn({ title, icon, source, transactions }: Props) {
     });
   };
 
+  // Group by admin and sort by total descending
+  const groups = useMemo(() => {
+    const map = new Map<string, Transaction[]>();
+    transactions.forEach((t) => {
+      const key = t.admin_id || t.admin_name || t.invoice_id;
+      const arr = map.get(key) ?? [];
+      arr.push(t);
+      map.set(key, arr);
+    });
+    return Array.from(map.entries())
+      .map(([key, txs]) => ({
+        key,
+        admin_id: txs[0].admin_id ?? key,
+        admin_name: txs[0].admin_name ?? "Unknown",
+        transactions: txs,
+        total: txs.reduce((s, t) => s + parseAmount(t.amount), 0),
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [transactions]);
+
   const total = useMemo(
     () => transactions.reduce((s, t) => s + parseAmount(t.amount), 0),
     [transactions],
@@ -87,6 +91,7 @@ export function SourceColumn({ title, icon, source, transactions }: Props) {
 
   return (
     <div className="flex flex-col h-full px-6 lg:px-8">
+      {/* Column header card */}
       <div
         className={`rounded-2xl bg-card/60 backdrop-blur-sm p-5 mb-5 ring-1 ${c.ring} ${c.shadow}`}
       >
@@ -113,12 +118,11 @@ export function SourceColumn({ title, icon, source, transactions }: Props) {
             <div>
               <h2 className="text-lg font-semibold text-foreground">{title}</h2>
               <div className="text-xs text-muted-foreground mt-1">
-                {transactions.length} Sale
-                {transactions.length === 1 ? "" : "s"} · Today
+                {transactions.length} Sale{transactions.length === 1 ? "" : "s"}{" "}
+                · Today
               </div>
             </div>
           </div>
-
           <div className="text-right">
             <div className="text-xs text-muted-foreground">Total</div>
             <div className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
@@ -128,6 +132,7 @@ export function SourceColumn({ title, icon, source, transactions }: Props) {
         </div>
       </div>
 
+      {/* Sorted admin groups */}
       <div className="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-thin">
         {transactions.length === 0 && (
           <div className="text-center text-sm text-muted-foreground py-12 border border-dashed border-border rounded-xl">
@@ -135,74 +140,104 @@ export function SourceColumn({ title, icon, source, transactions }: Props) {
           </div>
         )}
 
-        {groups.map((g) => (
-          <div key={g.admin_id} className="space-y-2">
-            <button
-              type="button"
-              onClick={() =>
-                setOpenGroups((s) => ({ ...s, [g.admin_id]: !s[g.admin_id] }))
-              }
-              className={`w-full flex items-center justify-between gap-3 rounded-xl bg-card/40 hover:bg-card/70 transition-colors px-4 py-3 border border-border/50`}
+        {groups.map((g, index) => {
+          const isBoss = index === 0 && groups.length > 1 && g.total > 0;
+
+          return (
+            <div
+              key={g.admin_id}
+              className={`space-y-2 ${isBoss ? "pt-7" : ""}`}
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div
-                  className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${c.chip}`}
-                >
-                  {isImageIcon ? (
-                    <Image
-                      src={icon}
-                      alt={title}
-                      width={36}
-                      height={36}
-                      className="object-contain"
-                    />
-                  ) : (
-                    <span className="text-sm">{icon}</span>
-                  )}
-                </div>
-                <div className="min-w-0 text-left">
-                  <div className="text-sm font-medium text-foreground truncate">
-                    {g.admin_name}
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenGroups((s) => ({
+                    ...s,
+                    [g.admin_id]: !s[g.admin_id],
+                  }))
+                }
+                className={`relative w-full flex items-center justify-between gap-3 rounded-xl transition-colors px-4 py-3 border ${
+                  isBoss
+                    ? "bg-amber-500/10 hover:bg-amber-500/20 border-amber-400/40"
+                    : "bg-card/40 hover:bg-card/70 border-border/50"
+                }`}
+              >
+                {/* Crown + "The Boss" badge */}
+                {isBoss && (
+                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-10">
+                    <span className="text-2xl leading-none drop-shadow-lg">
+                      👑
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-amber-400 mt-0.5 whitespace-nowrap">
+                      Aaja Ko Dada
+                    </span>
                   </div>
-                  <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
-                    {g.transactions.length} sale
-                    {g.transactions.length === 1 ? "" : "s"}
-                  </div>
-                </div>
-              </div>
+                )}
 
-              <div className="flex items-center gap-4">
-                <div className={`text-sm font-semibold tabular-nums ${c.text}`}>
-                  Rs. {formatAmount(g.total)}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {openGroups[g.admin_id] ? "▾" : "▸"}
-                </div>
-              </div>
-            </button>
-
-            {openGroups[g.admin_id] && (
-              <div className="pl-14 space-y-1">
-                {g.transactions.map((t, i) => (
+                <div className="flex items-center gap-3 min-w-0">
                   <div
-                    key={t._id ?? `${t.invoice_id}-${i}`}
-                    className="flex items-center justify-between gap-3 rounded-md px-3 py-2 bg-card/30 border border-border/40"
+                    className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${c.chip}`}
                   >
-                    <div className="text-[13px] text-muted-foreground font-mono truncate">
-                      {t.invoice_id.slice(0, 8)} ·{" "}
-                      {new Date(t.date).toLocaleTimeString()}
+                    {isImageIcon ? (
+                      <Image
+                        src={icon}
+                        alt={title}
+                        width={36}
+                        height={36}
+                        className="object-contain"
+                      />
+                    ) : (
+                      <span className="text-sm">{icon}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0 text-left">
+                    <div className="text-sm font-medium text-foreground truncate">
+                      {g.admin_name}
                     </div>
-                    <div
-                      className={`text-sm font-semibold tabular-nums ${c.text}`}
-                    >
-                      Rs. {formatAmount(t.amount)}
+                    <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                      {g.transactions.length} sale
+                      {g.transactions.length === 1 ? "" : "s"}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`text-sm font-semibold tabular-nums ${
+                      isBoss ? "text-amber-400" : c.text
+                    }`}
+                  >
+                    Rs. {formatAmount(g.total)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {openGroups[g.admin_id] ? "▾" : "▸"}
+                  </div>
+                </div>
+              </button>
+
+              {openGroups[g.admin_id] && (
+                <div className="pl-14 space-y-1">
+                  {g.transactions.map((t, i) => (
+                    <div
+                      key={t._id ?? `${t.invoice_id}-${i}`}
+                      className="flex items-center justify-between gap-3 rounded-md px-3 py-2 bg-card/30 border border-border/40"
+                    >
+                      <div className="text-[13px] text-muted-foreground font-mono truncate">
+                        {t.invoice_id.slice(0, 8)} ·{" "}
+                        {new Date(t.date).toLocaleTimeString()}
+                      </div>
+                      <div
+                        className={`text-sm font-semibold tabular-nums ${c.text}`}
+                      >
+                        Rs. {formatAmount(t.amount)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
