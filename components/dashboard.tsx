@@ -10,7 +10,7 @@ export function Dashboard() {
   const [incoming, setIncoming] = useState<Transaction | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [audioSrc, setAudioSrc] = useState<string | null>(
-    process.env.NEXT_PUBLIC_ALERT_SOUND || "/sounds/trumpet.mp3",
+    process.env.NEXT_PUBLIC_ALERT_SOUND || "/sounds/announcement.mp3",
   );
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const incomingTimer = useRef<number | null>(null);
@@ -135,10 +135,6 @@ export function Dashboard() {
           <div />
           {/* Centered title */}
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-green-600 pulse-dot" />
-              Live · Today
-            </div>
             <h1 className="mt-2 text-3xl lg:text-4xl font-bold tracking-tight">
               Today's Leaderboard
             </h1>
