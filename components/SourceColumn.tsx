@@ -104,7 +104,7 @@ function SourceColumnImpl({ title, source, transactions }: Props) {
       {/* Sorted admin groups */}
       <div className="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-thin">
         {transactions.length === 0 && (
-          <div className="text-center text-sm text-muted-foreground py-12 border border-dashed border-border rounded-xl">
+          <div className="text-center text-sm text-muted-foreground py-12 rounded-xl">
             No sales yet
           </div>
         )}
