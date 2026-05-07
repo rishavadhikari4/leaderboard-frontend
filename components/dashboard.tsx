@@ -3,12 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { SourceColumn, type Transaction } from "./SourceColumn";
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2 } from "lucide-react";
 
 export function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [incoming, setIncoming] = useState<Transaction | null>(null);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(
     process.env.NEXT_PUBLIC_ALERT_SOUND || "/sounds/announcement.mp3",
   );
@@ -35,9 +35,6 @@ export function Dashboard() {
 
   // Hydrate client-only state and start live sync
   useEffect(() => {
-    // keep a ref in sync so socket handlers see latest value
-    soundEnabledRef.current = soundEnabled;
-
     const ENCRYPTION_KEY =
       process.env.NEXT_PUBLIC_FRONTEND_ENCRYPTION_KEY ||
       "your-frontend-encryption-key";
@@ -104,6 +101,20 @@ export function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // keep the ref updated when user toggles sound
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
+
+  const enableSound = async () => {
+    try {
+      setSoundEnabled(true);
+      soundEnabledRef.current = true;
+    } catch (e) {
+      // ignore play errors
+    }
+  };
+
   const grouped = useMemo(() => {
     return {
       nest: transactions.filter((t) => t.source === "nest"),
@@ -147,23 +158,15 @@ export function Dashboard() {
             </p>
           </div>
 
-          {/* Right: mute, choose audio, and test */}
+          {/* Right: one-time enable-sound button (visible until user consents) */}
           <div className="w-32 flex justify-end items-center gap-2">
-            {soundEnabled ? (
+            {!soundEnabled && (
               <button
-                onClick={() => setSoundEnabled(false)}
-                className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Mute"
+                onClick={enableSound}
+                className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-foreground/30 hover:bg-card hover:shadow-md focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                aria-label="Enable sound"
               >
-                <Volume2 className="h-4 w-4" />
-              </button>
-            ) : (
-              <button
-                onClick={() => setSoundEnabled(true)}
-                className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Unmute"
-              >
-                <VolumeX className="h-4 w-4" />
+                Enable sound
               </button>
             )}
           </div>
