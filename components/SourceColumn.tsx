@@ -1,5 +1,5 @@
-import Image from "next/image";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
+import { formatAmount, parseAmount } from "@/lib/currency";
 
 export interface Transaction {
   _id: string;
@@ -42,25 +42,9 @@ const sourceClasses: Record<
   },
 };
 
-export function SourceColumn({ title, source, transactions }: Props) {
+function SourceColumnImpl({ title, source, transactions }: Props) {
   const c = sourceClasses[source];
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-
-  const parseAmount = (v: number | string | undefined) => {
-    if (v == null) return 0;
-    if (typeof v === "number") return v;
-    const cleaned = String(v).replace(/[^0-9.-]/g, "");
-    const parsed = parseFloat(cleaned);
-    return Number.isFinite(parsed) ? parsed : 0;
-  };
-
-  const formatAmount = (v: number | string | undefined) => {
-    const num = parseAmount(v);
-    return num.toLocaleString("en-IN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
 
   // Group by admin and sort by total descending
   const groups = useMemo(() => {
@@ -207,3 +191,5 @@ export function SourceColumn({ title, source, transactions }: Props) {
     </div>
   );
 }
+
+export const SourceColumn = memo(SourceColumnImpl);

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { SourceColumn, type Transaction } from "./SourceColumn";
+import { formatAmount, parseAmount } from "@/lib/currency";
 import { Volume2 } from "lucide-react";
 
 export function Dashboard() {
@@ -16,22 +17,6 @@ export function Dashboard() {
   const incomingTimer = useRef<number | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const soundEnabledRef = useRef(soundEnabled);
-
-  const parseAmount = (v: number | string | undefined) => {
-    if (v == null) return 0;
-    if (typeof v === "number") return v;
-    const cleaned = String(v).replace(/[^0-9.-]/g, "");
-    const parsed = parseFloat(cleaned);
-    return Number.isFinite(parsed) ? parsed : 0;
-  };
-
-  const formatAmount = (v: number | string | undefined) => {
-    const num = parseAmount(v);
-    return num.toLocaleString("en-IN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
 
   // Hydrate client-only state and start live sync
   useEffect(() => {
@@ -107,11 +92,14 @@ export function Dashboard() {
   }, [soundEnabled]);
 
   const enableSound = async () => {
+    setSoundEnabled(true);
+    soundEnabledRef.current = true;
     try {
-      setSoundEnabled(true);
-      soundEnabledRef.current = true;
+      if (audioRef.current) {
+        await audioRef.current.play();
+      }
     } catch (e) {
-      // ignore play errors
+      // ignore autoplay-policy errors
     }
   };
 
