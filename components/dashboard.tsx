@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { SourceColumn, type Transaction } from "./SourceColumn";
 import { formatAmount, parseAmount } from "@/lib/currency";
-import { Volume2 } from "lucide-react";
 
 export function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
