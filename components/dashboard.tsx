@@ -9,7 +9,7 @@ export function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [incoming, setIncoming] = useState<Transaction | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
-  const [audioSrc, setAudioSrc] = useState<string | null>(
+  const [audioSrc] = useState<string | null>(
     process.env.NEXT_PUBLIC_ALERT_SOUND || "/sounds/announcement.mp3",
   );
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -33,7 +33,7 @@ export function Dashboard() {
         });
         if (res.ok) {
           const data: Transaction[] = await res.json();
-          setTransactions(data.reverse());
+          setTransactions([...data].reverse());
         } else {
           console.error("Failed to fetch transactions", res.status);
         }
@@ -54,7 +54,12 @@ export function Dashboard() {
       socket.on("connect", () => console.log("Socket connected"));
 
       socket.on("new_transaction", (data: Transaction) => {
-        setTransactions((prev) => [data, ...prev]);
+        setTransactions((prev) => {
+          // Keep list bounded and avoid duplicate inserts from retries/reconnects.
+          if (prev.some((t) => t._id === data._id)) return prev;
+          const next = [data, ...prev];
+          return next.length > 500 ? next.slice(0, 500) : next;
+        });
         setIncoming(data);
 
         if (incomingTimer.current) window.clearTimeout(incomingTimer.current);
@@ -102,18 +107,24 @@ export function Dashboard() {
     }
   };
 
-  const grouped = useMemo(() => {
+  const { grouped, overall } = useMemo(() => {
+    const nest: Transaction[] = [];
+    const sms: Transaction[] = [];
+    const babal: Transaction[] = [];
+    let overall = 0;
+
+    for (const t of transactions) {
+      overall += parseAmount(t.amount);
+      if (t.source === "nest") nest.push(t);
+      else if (t.source === "sms") sms.push(t);
+      else babal.push(t);
+    }
+
     return {
-      nest: transactions.filter((t) => t.source === "nest"),
-      sms: transactions.filter((t) => t.source === "sms"),
-      babal: transactions.filter((t) => t.source === "babal"),
+      grouped: { nest, sms, babal },
+      overall,
     };
   }, [transactions]);
-
-  const overall = useMemo(
-    () => transactions.reduce((s, t) => s + parseAmount((t as any).amount), 0),
-    [transactions],
-  );
 
   const sourceLabel =
     incoming?.source === "nest"
@@ -129,10 +140,10 @@ export function Dashboard() {
 
       {/* Top bar */}
       <header className="px-6 lg:px-10 lg:pt-4">
-        <div className="grid grid-cols-3 items-center">
-          <div />
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:items-center">
+          <div className="hidden md:block" />
           {/* Centered title */}
-          <div className="text-center">
+          <div className="text-center md:order-none order-1">
             <h1 className="mt-2 text-3xl lg:text-4xl font-bold tracking-tight">
               Today's Leaderboard
             </h1>
@@ -146,11 +157,11 @@ export function Dashboard() {
           </div>
 
           {/* Right: one-time enable-sound button (visible until user consents) */}
-          <div className="w-32 flex justify-end items-center gap-2">
+          <div className="w-full md:w-auto flex justify-center md:justify-end items-center gap-2 order-2 md:order-none">
             {!soundEnabled && (
               <button
                 onClick={enableSound}
-                className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-foreground/30 hover:bg-card hover:shadow-md focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-foreground/30 hover:bg-card hover:shadow-md focus:outline-none focus:ring-2 focus:ring-foreground/20 w-full md:w-auto max-w-xs"
                 aria-label="Enable sound"
               >
                 Enable sound
@@ -162,12 +173,12 @@ export function Dashboard() {
 
       {/* Incoming flash banner */}
       {incoming && (
-        <div className="px-6 lg:px-10 mt-6 h-14">
+        <div className="px-6 lg:px-10 mt-6 min-h-14">
           <div
             key={incoming._id}
-            className="slide-fade mx-auto max-w-2xl rounded-full bg-card/80 backdrop-blur border border-white/15 px-5 py-3 flex items-center justify-center gap-3 [box-shadow:0_10px_40px_-10px_rgba(255,255,255,0.18)]"
+            className="slide-fade mx-auto max-w-2xl rounded-2xl md:rounded-full bg-card/80 backdrop-blur border border-white/15 px-4 md:px-5 py-3 flex items-center justify-center gap-3 [box-shadow:0_10px_40px_-10px_rgba(255,255,255,0.18)]"
           >
-            <span className="text-sm">
+            <span className="text-sm text-center md:text-left">
               <span className="font-semibold text-black">
                 Rs. {formatAmount((incoming as any).amount)}
               </span>{" "}

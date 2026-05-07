@@ -45,6 +45,11 @@ const sourceClasses: Record<
 function SourceColumnImpl({ title, source, transactions }: Props) {
   const c = sourceClasses[source];
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>(
+    {},
+  );
+  const INITIAL_VISIBLE = 5;
+  const INCREMENT = 10;
 
   // Group by admin and sort by total descending
   const groups = useMemo(() => {
@@ -166,22 +171,68 @@ function SourceColumnImpl({ title, source, transactions }: Props) {
 
               {openGroups[g.admin_id] && (
                 <div className="pl-14 space-y-1">
-                  {g.transactions.map((t, i) => (
-                    <div
-                      key={t._id ?? `${t.invoice_id}-${i}`}
-                      className="flex items-center justify-between gap-3 rounded-md px-3 py-2 bg-card/30 border border-border/40"
-                    >
-                      <div className="text-[13px] text-muted-foreground font-mono truncate">
-                        {t.invoice_id.slice(0, 8)} ·{" "}
-                        {new Date(t.date).toLocaleTimeString()}
-                      </div>
-                      <div
-                        className={`text-sm font-semibold tabular-nums ${c.text}`}
-                      >
-                        Rs. {formatAmount(t.amount)}
-                      </div>
-                    </div>
-                  ))}
+                  {(() => {
+                    const total = g.transactions.length;
+                    const visible =
+                      visibleCounts[g.admin_id] ?? INITIAL_VISIBLE;
+                    const slice = g.transactions.slice(0, visible);
+
+                    return (
+                      <>
+                        {slice.map((t, i) => (
+                          <div
+                            key={t._id ?? `${t.invoice_id}-${i}`}
+                            className="flex items-center justify-between gap-3 rounded-md px-3 py-2 bg-card/30 border border-border/40"
+                          >
+                            <div className="text-[13px] text-muted-foreground font-mono truncate">
+                              {t.invoice_id.slice(0, 8)} ·{" "}
+                              {new Date(t.date).toLocaleTimeString()}
+                            </div>
+                            <div
+                              className={`text-sm font-semibold tabular-nums ${c.text}`}
+                            >
+                              Rs. {formatAmount(t.amount)}
+                            </div>
+                          </div>
+                        ))}
+
+                        {visible < total && (
+                          <div className="px-3 py-2">
+                            <button
+                              onClick={() =>
+                                setVisibleCounts((s) => ({
+                                  ...s,
+                                  [g.admin_id]: Math.min(
+                                    total,
+                                    visible + INCREMENT,
+                                  ),
+                                }))
+                              }
+                              className="text-xs text-muted-foreground hover:text-foreground"
+                            >
+                              Show more ({Math.min(total - visible, INCREMENT)})
+                            </button>
+                          </div>
+                        )}
+
+                        {visible >= total && total > INITIAL_VISIBLE && (
+                          <div className="px-3 py-2">
+                            <button
+                              onClick={() =>
+                                setVisibleCounts((s) => ({
+                                  ...s,
+                                  [g.admin_id]: INITIAL_VISIBLE,
+                                }))
+                              }
+                              className="text-xs text-muted-foreground hover:text-foreground"
+                            >
+                              Show less
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               )}
             </div>
