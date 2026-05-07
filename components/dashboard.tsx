@@ -130,7 +130,7 @@ export function Dashboard() {
       <audio ref={audioRef} preload="auto" src={audioSrc ?? undefined} />
 
       {/* Top bar */}
-      <header className="px-6 lg:px-10 pt-6 lg:pt-8">
+      <header className="px-6 lg:px-10 lg:pt-4">
         <div className="grid grid-cols-3 items-center">
           <div />
           {/* Centered title */}
