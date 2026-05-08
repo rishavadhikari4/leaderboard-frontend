@@ -56,7 +56,7 @@ function SourceColumnImpl({ title, source, transactions }: Props) {
   const groups = useMemo(() => {
     const map = new Map<string, Transaction[]>();
     transactions.forEach((t) => {
-      const key = t.admin_id || t.admin_name || t.invoice_id;
+      const key = t.admin_id || t.admin_name || String(t.invoice_id);
       const arr = map.get(key) ?? [];
       arr.push(t);
       map.set(key, arr);
@@ -182,11 +182,11 @@ function SourceColumnImpl({ title, source, transactions }: Props) {
                         <>
                           {slice.map((t, i) => (
                             <div
-                              key={t._id ?? `${t.invoice_id}-${i}`}
+                              key={t._id ?? `${String(t.invoice_id)}-${i}`}
                               className="flex items-center justify-between gap-3 rounded-md px-3 py-2 bg-card/30 border border-border/40"
                             >
                               <div className="text-[13px] text-muted-foreground font-mono truncate">
-                                {t.invoice_id.slice(0, 8)} ·{" "}
+                                {String(t.invoice_id).slice(0, 8)} ·{" "}
                                 {new Date(t.date).toLocaleTimeString()}
                               </div>
                               <div
