@@ -52,24 +52,44 @@ function SourceColumnImpl({ title, source, transactions }: Props) {
   const INITIAL_VISIBLE = 5;
   const INCREMENT = 10;
 
-  // Group by admin and sort by total descending
   const groups = useMemo(() => {
-    const map = new Map<string, Transaction[]>();
-    transactions.forEach((t) => {
-      const key = t.admin_id || t.admin_name || String(t.invoice_id);
-      const arr = map.get(key) ?? [];
-      arr.push(t);
-      map.set(key, arr);
-    });
-    return Array.from(map.entries())
-      .map(([key, txs]) => ({
-        key,
-        admin_id: txs[0].admin_id ?? key,
-        admin_name: txs[0].admin_name ?? "Unknown",
-        transactions: txs,
-        total: txs.reduce((s, t) => s + parseAmount(t.amount), 0),
-      }))
-      .sort((a, b) => b.total - a.total);
+    const map = new Map<
+      string,
+      {
+        admin_id: string;
+        admin_name: string;
+        transactions: Transaction[];
+        total: number;
+      }
+    >();
+
+    for (const t of transactions) {
+      const key =
+        String(t.admin_id ?? "").trim() ||
+        String(t.admin_name ?? "").trim() ||
+        String(t.invoice_id);
+
+      const existing = map.get(key);
+      if (existing) {
+        // ✅ Merge into the existing group — this is what was broken before
+        existing.transactions.push(t);
+        existing.total += parseAmount(t.amount);
+        // Keep the most recent non-empty name in case early records lacked it
+        if (!existing.admin_name && t.admin_name) {
+          existing.admin_name = t.admin_name;
+        }
+      } else {
+        map.set(key, {
+          admin_id: key,
+          admin_name: t.admin_name ?? "Unknown",
+          transactions: [t],
+          total: parseAmount(t.amount),
+        });
+      }
+    }
+
+    // ✅ Sort descending by total AFTER all transactions are merged
+    return Array.from(map.values()).sort((a, b) => b.total - a.total);
   }, [transactions]);
 
   const total = useMemo(
@@ -84,13 +104,11 @@ function SourceColumnImpl({ title, source, transactions }: Props) {
         className={`rounded-2xl bg-card/60 backdrop-blur-sm p-5 mb-5 ring-1 ${c.ring} ${c.shadow}`}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-              <div className="text-xs text-muted-foreground mt-1">
-                {transactions.length} Sale{transactions.length === 1 ? "" : "s"}{" "}
-                · Today
-              </div>
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+            <div className="text-xs text-muted-foreground mt-1">
+              {transactions.length} Sale{transactions.length === 1 ? "" : "s"} ·
+              Today
             </div>
           </div>
           <div className="text-right">
@@ -111,7 +129,12 @@ function SourceColumnImpl({ title, source, transactions }: Props) {
         )}
 
         {groups.map((g, index) => {
-          const isBoss = index === 0 && groups.length > 1 && g.total > 0;
+          // ✅ Crown only the true leader — must have >0 total and be alone at the top
+          const isBoss =
+            index === 0 &&
+            groups.length > 1 &&
+            g.total > 0 &&
+            g.total > (groups[1]?.total ?? 0); // strictly ahead, not tied
 
           return (
             <div
@@ -173,7 +196,7 @@ function SourceColumnImpl({ title, source, transactions }: Props) {
                 <ScrollArea className="max-h-72 pr-1">
                   <div className="pl-14 space-y-1 pb-2">
                     {(() => {
-                      const total = g.transactions.length;
+                      const count = g.transactions.length;
                       const visible =
                         visibleCounts[g.admin_id] ?? INITIAL_VISIBLE;
                       const slice = g.transactions.slice(0, visible);
@@ -197,14 +220,14 @@ function SourceColumnImpl({ title, source, transactions }: Props) {
                             </div>
                           ))}
 
-                          {visible < total && (
+                          {visible < count && (
                             <div className="px-3 py-2">
                               <button
                                 onClick={() =>
                                   setVisibleCounts((s) => ({
                                     ...s,
                                     [g.admin_id]: Math.min(
-                                      total,
+                                      count,
                                       visible + INCREMENT,
                                     ),
                                   }))
@@ -212,12 +235,12 @@ function SourceColumnImpl({ title, source, transactions }: Props) {
                                 className="text-xs text-muted-foreground hover:text-foreground"
                               >
                                 Show more (
-                                {Math.min(total - visible, INCREMENT)})
+                                {Math.min(count - visible, INCREMENT)})
                               </button>
                             </div>
                           )}
 
-                          {visible >= total && total > INITIAL_VISIBLE && (
+                          {visible >= count && count > INITIAL_VISIBLE && (
                             <div className="px-3 py-2">
                               <button
                                 onClick={() =>
