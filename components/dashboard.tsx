@@ -98,6 +98,7 @@ export function Dashboard() {
   const enableSound = async () => {
     setSoundEnabled(true);
     soundEnabledRef.current = true;
+    audioRef.current?.play().catch(() => {});
   };
 
   const { grouped, overall } = useMemo(() => {
