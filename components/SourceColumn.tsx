@@ -109,31 +109,31 @@ export function SourceColumn({ source, transactions }: Props) {
       className="flex flex-col w-full relative"
     >
       {/* ── Header: logo + name + count ── */}
-      <div className="flex items-center justify-between mb-1.5 relative z-0 min-h-[55px] sm:min-h-[65px] lg:min-h-[75px]">
-        <div className="flex items-center gap-2 sm:gap-2.5 lg:gap-3 min-w-0">
+      <div className="flex items-center justify-between mb-1 sm:mb-1.5 relative z-0 min-h-[45px] sm:min-h-[55px] lg:min-h-[65px] xl:min-h-[75px]">
+        <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2.5 min-w-0">
           <Image
             src={brand.logo}
             alt={brand.label}
             width={110}
             height={32}
-            className="object-contain object-left h-5 w-16 sm:h-6 sm:w-20 md:h-7 md:w-24 lg:h-8 lg:w-28"
+            className="object-contain object-left h-4 w-14 sm:h-5 sm:w-16 md:h-6 md:w-20 lg:h-7 lg:w-24 xl:h-8 xl:w-28"
             priority
           />
-          <span className="font-bold text-[#1f1f30] text-fluid-base sm:text-fluid-lg truncate">
+          <span className="font-bold text-[#1f1f30] text-fluid-sm sm:text-fluid-base md:text-fluid-lg lg:text-fluid-xl truncate">
             {brand.label}
           </span>
         </div>
-        <span className="text-[#0e0e0e] text-fluid-xs whitespace-nowrap ml-2">
+        <span className="text-[#0e0e0e] text-fluid-xs whitespace-nowrap ml-1 sm:ml-2">
           {transactions.length} Sale{transactions.length !== 1 ? "s" : ""} · Today
         </span>
       </div>
 
       {/* ── Total ── */}
-      <div className="flex items-baseline gap-2 sm:gap-2.5 mb-2.5 sm:mb-3">
-        <span className="font-bold italic text-[#1f1f30] text-fluid-xl sm:text-fluid-2xl leading-none">
+      <div className="flex items-baseline gap-1.5 sm:gap-2 mb-2 sm:mb-2.5">
+        <span className="font-bold italic text-[#1f1f30] text-fluid-lg sm:text-fluid-xl lg:text-fluid-2xl leading-none">
           Total:
         </span>
-        <span className={`font-extrabold italic text-fluid-xl sm:text-fluid-2xl leading-none ${brand.totalColor}`}>
+        <span className={`font-extrabold italic text-fluid-lg sm:text-fluid-xl lg:text-fluid-2xl leading-none ${brand.totalColor}`}>
           Rs. {formatAmount(columnTotal)}
         </span>
       </div>
@@ -144,9 +144,9 @@ export function SourceColumn({ source, transactions }: Props) {
         {topSeller ? (
           <>
             <div
-              className={`relative px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5 overflow-visible rounded-t-lg sm:rounded-t-xl ${brand.heroBg} ${brand.heroText} h-[95px] sm:h-[115px] md:h-[135px] lg:h-[150px] pr-[80px] sm:pr-[90px] md:pr-[100px] lg:pr-[110px]`}
+              className={`relative px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4 lg:px-5 lg:py-5 overflow-visible rounded-t-lg sm:rounded-t-xl ${brand.heroBg} ${brand.heroText} h-[85px] sm:h-[95px] md:h-[110px] lg:h-[130px] xl:h-[150px] pr-[70px] sm:pr-[80px] md:pr-[90px] lg:pr-[100px] xl:pr-[110px]`}
             >
-              <div className="absolute right-0 bottom-0 pointer-events-none z-20 w-[75px] sm:w-[85px] md:w-[95px] lg:w-[105px] h-[145px] sm:h-[170px] md:h-[200px] lg:h-[230px]">
+              <div className="absolute right-0 bottom-0 pointer-events-none z-20 w-[65px] sm:w-[75px] md:w-[85px] lg:w-[95px] xl:w-[105px] h-[130px] sm:h-[145px] md:h-[165px] lg:h-[195px] xl:h-[230px]">
                 {imagePath ? (
                   <>
                     <img
@@ -158,7 +158,7 @@ export function SourceColumn({ source, transactions }: Props) {
                   </>
                 ) : (
                   <div
-                    className={`absolute bottom-2 right-2 sm:bottom-2.5 sm:right-2.5 w-10 h-10 sm:w-11 sm:h-11 md:w-13 md:h-13 rounded-full flex items-center justify-center font-bold border-2 bg-white/25 ${brand.heroText} border-white/40 text-sm sm:text-base md:text-lg`}
+                    className={`absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-bold border-2 bg-white/25 ${brand.heroText} border-white/40 text-xs sm:text-sm md:text-base`}
                   >
                     {getInitials(topSeller.admin_name ?? "?")}
                   </div>
@@ -166,12 +166,12 @@ export function SourceColumn({ source, transactions }: Props) {
               </div>
 
               {/* Crown + name row */}
-              <div className="flex items-start justify-between mb-1">
-                <div className="flex flex-col gap-0.5 sm:gap-1">
+              <div className="flex items-start justify-between mb-0.5 sm:mb-1">
+                <div className="flex flex-col gap-0.5">
                   <span className="leading-none inline-flex text-[#ffd23f]">
-                    <Icon icon="material-symbols:crown" className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+                    <Icon icon="material-symbols:crown" className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7" />
                   </span>
-                  <span className="text-fluid-base sm:text-fluid-lg font-semibold leading-tight">
+                  <span className="text-fluid-sm sm:text-fluid-base md:text-fluid-lg font-semibold leading-tight">
                     {topSeller.admin_name}
                   </span>
                 </div>
@@ -187,9 +187,9 @@ export function SourceColumn({ source, transactions }: Props) {
               </div>
 
               {/* Total */}
-              <div className="mt-1.5 sm:mt-2">
+              <div className="mt-1 sm:mt-1.5">
                 <div className="text-fluid-xs opacity-70 mb-0.5">Total</div>
-                <div className="text-fluid-xl sm:text-fluid-2xl font-bold leading-none tracking-tight">
+                <div className="text-fluid-lg sm:text-fluid-xl lg:text-fluid-2xl font-bold leading-none tracking-tight">
                   Rs. {formatAmount(topSeller.total)}
                 </div>
               </div>
@@ -231,11 +231,11 @@ export function SourceColumn({ source, transactions }: Props) {
                 <button
                   type="button"
                   onClick={() => setOpenGroups((s) => ({ ...s, [g.admin_id]: !s[g.admin_id] }))}
-                  className="w-full flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3 border-b border-[#f0f0f0] bg-transparent cursor-pointer text-left hover:bg-[#fafafa] transition-colors"
+                  className="w-full flex items-center justify-between px-2 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2.5 lg:px-5 lg:py-3 border-b border-[#f0f0f0] bg-transparent cursor-pointer text-left hover:bg-[#fafafa] transition-colors"
                 >
-                  <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0 flex-1">
-                    <div className="flex items-center gap-1 sm:gap-1.5">
-                      <span className="font-semibold text-[#0e0e0e] text-fluid-sm sm:text-fluid-base truncate">
+                  <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold text-[#0e0e0e] text-fluid-xs sm:text-fluid-sm md:text-fluid-base truncate">
                         {g.admin_name}
                       </span>
                     </div>
@@ -246,16 +246,16 @@ export function SourceColumn({ source, transactions }: Props) {
                           <img
                             src="https://i.pinimg.com/originals/b7/03/7a/b7037a608cac4369cc7a2c5a6a891bc2.gif"
                             alt="fire"
-                            className="object-contain w-4 h-4 sm:w-4.5 sm:h-4.5 drop-shadow-lg"
+                            className="object-contain w-3.5 h-3.5 sm:w-4 sm:h-4 drop-shadow-lg"
                           />
                         </span>
                       )}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 ml-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-1.5 sm:ml-2">
                     <div className="flex flex-col items-end gap-0.5">
                       <span className="text-[#0e0e0e]/50 text-fluid-xs">Total</span>
-                      <span className="font-bold text-[#0e0e0e] text-fluid-sm sm:text-fluid-base whitespace-nowrap">
+                      <span className="font-bold text-[#0e0e0e] text-fluid-xs sm:text-fluid-sm md:text-fluid-base whitespace-nowrap">
                         Rs. {formatAmount(g.total)}
                       </span>
                     </div>

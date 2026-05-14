@@ -189,7 +189,7 @@ export function Dashboard() {
         )}
 
         {/* 3-column sales sections */}
-        <div className="pt-11 sm:pt-13 md:pt-15 lg:pt-18 px-2 sm:px-3.5 lg:px-5 pb-15 sm:pb-18">
+        <div className="pt-8 sm:pt-10 md:pt-12 lg:pt-14 xl:pt-16 px-1.5 sm:px-2 md:px-3 lg:px-4 xl:px-5 pb-12 sm:pb-14 md:pb-16">
           <FrameScreen transactions={transactions} />
         </div>
       </div>
