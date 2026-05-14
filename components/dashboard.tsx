@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { Icon } from "@iconify/react";
 import { io, Socket } from "socket.io-client";
 import { type Transaction } from "./SourceColumn";
 import { FrameScreen } from "./FrameScreen";
@@ -12,6 +13,7 @@ export function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [incoming, setIncoming] = useState<Transaction | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [showSoundBtn, setShowSoundBtn] = useState(true);
   const [audioSrc] = useState<string | null>(
     process.env.NEXT_PUBLIC_ALERT_SOUND || "/sounds/announcement.mp3",
   );
@@ -132,6 +134,22 @@ export function Dashboard() {
 
       {/* Main Content */}
       <div className="relative z-10 w-full h-full">
+        {/* Enable Sound Button */}
+        {showSoundBtn && (
+          <button
+            onClick={() => {
+              setSoundEnabled(true);
+              setShowSoundBtn(false);
+              audioRef.current?.play().catch(() => {});
+            }}
+            className="fixed right-8 top-8 bg-white/80 backdrop-blur border border-white/20 rounded-lg px-6 py-2 text-sm font-semibold hover:bg-white/90 transition-all duration-200 flex items-center gap-2 hover:scale-105 z-40"
+            aria-label="Enable sound"
+          >
+            <Icon icon="fluent:speaker-2-32-regular" width={24} height={24} />
+            <span className="text-[#0e0e0e]">Enable Sound</span>
+          </button>
+        )}
+
         {/* Header */}
         <header className="absolute top-4 left-1/2 -translate-x-1/2 text-center">
           <h6 className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold italic text-[#0333f9] text-4xl tracking-[-0.96px] leading-[normal] whitespace-nowrap">
@@ -140,11 +158,13 @@ export function Dashboard() {
           <p className="mt-2 [font-family:'Figtree-Medium',Helvetica] font-normal text-[#0e0e0e] text-sm text-center tracking-[-0.56px] leading-[normal] whitespace-nowrap">
             <span className="font-medium tracking-[-0.16px]">Rs</span>
             <span className="tracking-[-0.16px] [font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold italic">
-              {" "}{formatAmount(overall)}{" "}
+              {" "}
+              {formatAmount(overall)}{" "}
             </span>
             <span className="font-medium tracking-[-0.16px]">across</span>
             <span className="tracking-[-0.16px] [font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold italic">
-              {" "}{transactions.length} sales
+              {" "}
+              {transactions.length} sales
             </span>
           </p>
         </header>
