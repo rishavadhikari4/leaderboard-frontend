@@ -18,8 +18,8 @@ export const FrameScreen = ({ transactions }: FrameScreenProps) => {
   );
 
   return (
-    <div className="w-full max-w-[1440px] px-6">
-      <div className="grid grid-cols-3 gap-[70px] w-full items-start">
+    <div className="w-full  max-w-[1440px] px-6">
+      <div className="grid lg:grid-cols-3 gap-6 2xl:gap-[70px] w-full items-start">
         <SourceColumn source="babal" transactions={grouped.babal} />
         <SourceColumn source="nest" transactions={grouped.nest} />
         <SourceColumn source="sms" transactions={grouped.sms} />

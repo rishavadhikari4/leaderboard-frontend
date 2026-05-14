@@ -30,6 +30,21 @@ function useScaleFactor() {
   return scale;
 }
 
+function useWindowSize() {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    function update() {
+      setSize({ width: window.innerWidth, height: window.innerHeight });
+    }
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  return size;
+}
+
 export function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [incoming, setIncoming] = useState<Transaction | null>(null);
@@ -43,6 +58,7 @@ export function Dashboard() {
   const socketRef = useRef<Socket | null>(null);
   const soundEnabledRef = useRef(soundEnabled);
   const scale = useScaleFactor();
+  const { width, height } = useWindowSize();
 
   const parseAmount = (v: number | string | undefined) => {
     if (v == null) return 0;
@@ -108,7 +124,7 @@ export function Dashboard() {
 
         const amountVal = parseAmount((data as any).amount);
         if (soundEnabledRef.current && amountVal >= 10000) {
-          audioRef.current?.play().catch(() => {});
+          audioRef.current?.play().catch(() => { });
         }
 
         incomingTimer.current = window.setTimeout(() => setIncoming(null), 6000);
@@ -140,12 +156,15 @@ export function Dashboard() {
 
   return (
     <main
-      className="bg-white w-full min-h-screen relative overflow-hidden"
+      className="bg-white w-full min-h-screen relative "
       aria-label="Leaderboard page"
     >
+      <div className="absolute text-xs bg-black text-white rounded-full px-2 py-0.5 top-2 z-50 left-2 ">
+        device ratio = {width}/{height}
+      </div>
       {/* Background Image */}
       <Image
-        className="absolute w-full h-full top-0 left-0 pointer-events-none select-none object-cover"
+        className="absolute w-full h-full inset-0 pointer-events-none select-none object-cover"
         alt=""
         src={groupBg}
         fill
@@ -159,19 +178,7 @@ export function Dashboard() {
       {/* Main Content — scaled up uniformly on large screens */}
       <div
         className="relative z-10 w-full h-full"
-        style={{
-          // Scale the entire UI from the top-center origin.
-          // On a 1920px TV: scale = 1920/1440 = 1.33 → everything 33% bigger.
-          // On a 1440px laptop: scale = 1 → no change.
-          transform: scale !== 1 ? `scale(${scale})` : undefined,
-          transformOrigin: "top center",
-          // Prevent the scaled content from pushing the page height
-          // (the scaled element is visually larger but we keep the layout height as-is)
-          ...(scale !== 1 && {
-            width: `${(1 / scale) * 100}%`,
-            marginLeft: `${((1 - 1 / scale) / 2) * 100}%`,
-          }),
-        }}
+
       >
         {/* Enable Sound Button */}
         {showSoundBtn && (
@@ -179,19 +186,19 @@ export function Dashboard() {
             onClick={() => {
               setSoundEnabled(true);
               setShowSoundBtn(false);
-              audioRef.current?.play().catch(() => {});
+              audioRef.current?.play().catch(() => { });
             }}
-            className="fixed right-8 top-8 bg-white/80 backdrop-blur border border-white/20 rounded-lg px-6 py-2 text-sm font-semibold hover:bg-white/90 transition-all duration-200 flex items-center gap-2 hover:scale-105 z-40"
+            className="fixed right-8 top-[95%]  sm:top-8 bg-primary text-white sm:text-black sm:bg-white/80 backdrop-blur border border-white/20 rounded-lg px-4 sm:px-6 py-2 text-sm font-semibold hover:bg-white/90 transition-all duration-200 flex items-center gap-2 hover:scale-105 z-40"
             aria-label="Enable sound"
           >
             <Icon icon="fluent:speaker-2-32-regular" width={24} height={24} />
-            <span className="text-[#0e0e0e]">Enable Sound</span>
+            <span className="text-[#0e0e0e] hidden sm:block">Enable Sound</span>
           </button>
         )}
 
         {/* Header */}
-        <header className="absolute top-4 left-1/2 -translate-x-1/2 text-center">
-          <h6 className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold text-[#0333f9] text-5xl tracking-[-0.96px] leading-[normal] whitespace-nowrap">
+        <header className=" py-5  text-center">
+          <h6 className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-bold text-[#0333f9] text-2xl sm:text-4xl  tracking-[-0.96px] leading-[normal] whitespace-nowrap">
             LEADERBOARD
           </h6>
           <p className="mt-2 [font-family:'Figtree-Medium',Helvetica] font-normal text-[#0e0e0e] text-lg text-center tracking-[-0.56px] leading-[normal] whitespace-nowrap">
@@ -210,7 +217,7 @@ export function Dashboard() {
 
         {/* Incoming Flash Banner */}
         {incoming && (
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30">
             <div className="mx-auto rounded-full bg-card/80 backdrop-blur border border-white/15 px-5 py-3 flex items-center justify-center gap-3 [box-shadow:0_10px_40px_-10px_rgba(255,255,255,0.18)]">
               <span className="text-sm">
                 <span className="font-semibold text-black">
@@ -225,7 +232,7 @@ export function Dashboard() {
         )}
 
         {/* 3-column sales sections */}
-        <div className="absolute top-32 left-0 right-0 w-full flex justify-center">
+        <div className="  w-full flex justify-center">
           <FrameScreen transactions={transactions} />
         </div>
       </div>

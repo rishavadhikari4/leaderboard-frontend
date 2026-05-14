@@ -25,23 +25,23 @@ const brandConfig = {
   babal: {
     label: "Babal Host",
     logo: "/logo/babalhost.png",
-    heroBg: "#f4cf31",
-    heroText: "#0e0e0e",
-    totalColor: "#dfb400",
+    heroBg: "bg-[#f4cf31]",
+    heroText: "text-[#0e0e0e]",
+    totalColor: "text-[#dfb400]",
   },
   nest: {
     label: "Nest Nepal",
     logo: "/logo/nestnepal.png",
-    heroBg: "#0333f9",
-    heroText: "#ffffff",
-    totalColor: "#0333f9",
+    heroBg: "bg-[#0333f9]",
+    heroText: "text-white",
+    totalColor: "text-[#0333f9]",
   },
   sms: {
     label: "Nest SMS",
     logo: "/logo/nestsms.png",
-    heroBg: "#2b7fff",
-    heroText: "#ffffff",
-    totalColor: "#2b7fff",
+    heroBg: "bg-[#2b7fff]",
+    heroText: "text-white",
+    totalColor: "text-[#2b7fff]",
   },
 } as const;
 
@@ -68,9 +68,6 @@ function getInitials(name: string): string {
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("");
 }
-
-const HERO_HEIGHT = 150;
-const PHOTO_HEIGHT = 240;
 
 export function SourceColumn({ source, transactions }: Props) {
   const brand = brandConfig[source];
@@ -103,125 +100,62 @@ export function SourceColumn({ source, transactions }: Props) {
   const topSeller = groups[0] ?? null;
   const imagePath = topSeller ? getStaffImage(topSeller.admin_id) : null;
 
-  const PHOTO_OVERFLOW = PHOTO_HEIGHT - HERO_HEIGHT;
-
   return (
-    <section
-      aria-label={`${brand.label} sales`}
-      style={{ display: "flex", flexDirection: "column", width: "100%", position: "relative" }}
-    >
+    <section aria-label={`${brand.label} sales`} className="flex flex-col w-full relative">
+
       {/* ── Header: logo + name + count ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "6px",
-          minHeight: `${PHOTO_OVERFLOW}px`,
-          position: "relative",
-          zIndex: 0,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+      <div className="flex items-center justify-between mb-1.5 min-h-[70px] relative z-0">
+        <div className="flex items-center gap-2.5 ">
           <Image
             src={brand.logo}
             alt={brand.label}
-            width={110}
+            width={56}
             height={32}
-            style={{ objectFit: "contain", objectPosition: "left", height: "32px", width: "110px" }}
+            className="object-contain object-left h-7 "
             priority
           />
-          <span style={{ fontWeight: 700, color: "#1f1f30", fontSize: "18px", whiteSpace: "nowrap" }}>
+          <span className="font-bold text-[#1f1f30] text-lg whitespace-nowrap">
             {brand.label}
           </span>
         </div>
-        <span style={{ color: "#0e0e0e", fontSize: "12px", whiteSpace: "nowrap" }}>
+        <span className="text-[#0e0e0e] text-xs whitespace-nowrap">
           {transactions.length} Sale{transactions.length !== 1 ? "s" : ""} · Today
         </span>
       </div>
 
       {/* ── Total ── */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "16px" }}>
-        <span style={{ fontWeight: 700, fontStyle: "italic", color: "#1f1f30", fontSize: "30px", lineHeight: 1 }}>
+      <div className="flex items-baseline gap-2 mb-4">
+        <span className="font-bold italic text-[#1f1f30] text-[24px] 2xl:text-[25px] leading-none">
           Total:
         </span>
-        <span style={{ fontWeight: 800, fontStyle: "italic", color: brand.totalColor, fontSize: "30px", lineHeight: 1 }}>
+        <span className={`font-extrabold italic text-[24px] 2xl:text-[25px] leading-none ${brand.totalColor}`}>
           Rs. {formatAmount(columnTotal)}
         </span>
       </div>
 
       {/* ── Card wrapper ── */}
-      <div
-        style={{
-          width: "100%",
-          borderRadius: "12px",
-          border: "1px solid #e8e8e8",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-          overflow: "visible",
-          position: "relative",
-        }}
-      >
+      <div className="w-full rounded-xl border border-[#e8e8e8] shadow-[0_2px_12px_rgba(0,0,0,0.08)] overflow-visible relative mt-4">
+
         {/* ── Hero banner ── */}
         {topSeller ? (
           <>
             <div
-              style={{
-                position: "relative",
-                backgroundColor: brand.heroBg,
-                color: brand.heroText,
-                height: `${HERO_HEIGHT}px`,
-                padding: "20px 24px",
-                paddingRight: "155px",
-                overflow: "visible",
-                borderRadius: "12px 12px 0 0",
-              }}
+              className={`relative ${brand.heroBg} ${brand.heroText} h-[150px] p-5 pr-[155px] overflow-visible rounded-t-xl`}
             >
-              <div
-                style={{
-                  position: "absolute",
-                  right: 0,
-                  bottom: 0,
-                  width: "145px",
-                  height: `${PHOTO_HEIGHT}px`,
-                  pointerEvents: "none",
-                  zIndex: 20,
-                }}
-              >
+              {/* Staff photo */}
+              <div className="absolute right-0 2xl:flex justify-end items-end bottom-0  w-[150px] h-[190px] 2xl:h-[240px]  overflow-hidden! pointer-events-none z-20">
                 {imagePath ? (
                   <>
                     <img
                       src={imagePath}
                       alt={topSeller.admin_name ?? "Top seller"}
-                      style={{
-                        position: "absolute",
-                        bottom: 0,
-                        right: 0,
-                        width: "145px",
-                        height: `${PHOTO_HEIGHT}px`,
-                        objectFit: "contain",
-                        objectPosition: "bottom center",
-                      }}
+                      className=" object-contain 2xl:h-[210px]!  object-top 2xl:object-bottom!"
                     />
-                    <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
+                    <div className="absolute inset-0 pointer-events-none" />
                   </>
                 ) : (
                   <div
-                    style={{
-                      position: "absolute",
-                      bottom: "16px",
-                      right: "16px",
-                      width: "80px",
-                      height: "80px",
-                      borderRadius: "50%",
-                      background: "rgba(255,255,255,0.25)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "26px",
-                      fontWeight: 700,
-                      color: brand.heroText,
-                      border: "3px solid rgba(255,255,255,0.4)",
-                    }}
+                    className={`absolute bottom-4 right-4  w-20 h-20 rounded-full bg-white/25 flex items-center justify-center text-[26px] font-bold border-[3px] border-white/40 ${brand.heroText}`}
                   >
                     {getInitials(topSeller.admin_name ?? "?")}
                   </div>
@@ -229,20 +163,26 @@ export function SourceColumn({ source, transactions }: Props) {
               </div>
 
               {/* Crown + name row */}
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "4px" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  <span style={{ lineHeight: 1, display: "inline-flex", color: "#ffd23f" }}>
-                    <Icon icon="material-symbols:crown" width={28} height={28} />
+              <div className="flex items-start justify-between mb-1">
+                <div className="flex flex-col gap-0.5">
+                  <span className="leading-none inline-flex text-[#ffd23f]">
+                    <Icon icon="material-symbols:crown" width={28} height={28} className={`${brand.label.toLocaleLowerCase() == "babal host" ? "text-[#ffffff]" : ""}`} />
                   </span>
-                  <span style={{ fontSize: "20px", fontWeight: 600, lineHeight: 1.2 }}>
+                  <span className="text-xs 2xl:text-xl font-semibold text-nowrap! truncate leading-snug">
                     {topSeller.admin_name}
                   </span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setOpenGroups((s) => ({ ...s, [topSeller.admin_id]: !s[topSeller.admin_id] }))}
+                  onClick={() =>
+                    setOpenGroups((s) => ({
+                      ...s,
+                      [topSeller.admin_id]: !s[topSeller.admin_id],
+                    }))
+                  }
                   aria-expanded={!!openGroups[topSeller.admin_id]}
-                  style={{ fontSize: "11px", opacity: 0.7, whiteSpace: "nowrap", paddingTop: "2px", background: "none", border: "none", cursor: "pointer", color: "inherit" }}
+                  className="text-[11px] opacity-70 whitespace-nowrap pt-0.5 bg-transparent border-none cursor-pointer"
+                  style={{ color: "inherit" }}
                 >
                   {topSeller.transactions.length} Sale{topSeller.transactions.length !== 1 ? "s" : ""}{" "}
                   {openGroups[topSeller.admin_id] ? "▾" : "▸"}
@@ -250,9 +190,9 @@ export function SourceColumn({ source, transactions }: Props) {
               </div>
 
               {/* Total */}
-              <div style={{ marginTop: "10px" }}>
-                <div style={{ fontSize: "11px", opacity: 0.7, marginBottom: "2px" }}>Total</div>
-                <div style={{ fontSize: "28px", fontWeight: 700, lineHeight: 1, letterSpacing: "-0.5px" }}>
+              <div className="mt-1.5 2xl:mt-2.5">
+                <div className="text-[11px] opacity-70 mb-0.5">Total</div>
+                <div className="text-sm 2xl:text-[28px] font-bold lg:text-nowrap leading-none tracking-tight">
                   Rs. {formatAmount(topSeller.total)}
                 </div>
               </div>
@@ -260,16 +200,16 @@ export function SourceColumn({ source, transactions }: Props) {
 
             {/* Top-seller expanded invoice rows */}
             {openGroups[topSeller.admin_id] && (
-              <div style={{ backgroundColor: "#fafafa", borderBottom: "1px solid #f0f0f0" }}>
+              <div className="bg-[#fafafa] border-b border-[#f0f0f0]">
                 {topSeller.transactions.map((t, i) => (
                   <div
                     key={t._id ?? `${t.invoice_id}-${i}`}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 32px", borderBottom: "1px solid #f0f0f0" }}
+                    className="flex items-center justify-between px-8 py-2 border-b border-[#f0f0f0]"
                   >
-                    <span style={{ color: "rgba(14,14,14,0.5)", fontSize: "11px", fontFamily: "monospace" }}>
+                    <span className="text-[#0e0e0e]/50 text-[11px] font-mono">
                       {t.invoice_id.slice(0, 10)} · {new Date(t.date).toLocaleTimeString()}
                     </span>
-                    <span style={{ fontWeight: 600, color: "#0e0e0e", fontSize: "13px" }}>
+                    <span className="font-semibold text-[#0e0e0e] text-[13px]">
                       Rs. {formatAmount(t.amount)}
                     </span>
                   </div>
@@ -278,69 +218,69 @@ export function SourceColumn({ source, transactions }: Props) {
             )}
           </>
         ) : (
-          <div
-            style={{ padding: "40px 24px", textAlign: "center", color: "rgba(14,14,14,0.4)", fontSize: "14px", borderRadius: "12px 12px 0 0", backgroundColor: "#fff" }}
-          >
+          <div className="px-6 py-10 text-center text-[#0e0e0e]/40 text-sm rounded-t-xl bg-white">
             No sales yet
           </div>
         )}
 
         {/* ── Remaining sellers ── */}
-        <div style={{ overflow: "hidden", borderRadius: "0 0 12px 12px" }}>
+        <div className="overflow-hidden rounded-b-xl">
           {groups.slice(1).map((g, idx) => {
             const isOpen = openGroups[g.admin_id];
             const showFlame = idx > 4;
 
             return (
-              <div key={g.key ?? g.admin_id} style={{ backgroundColor: "#fff" }}>
+              <div key={g.key ?? g.admin_id} className="bg-white">
                 <button
                   type="button"
-                  onClick={() => setOpenGroups((s) => ({ ...s, [g.admin_id]: !s[g.admin_id] }))}
-                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px", borderBottom: "1px solid #f0f0f0", background: "none", cursor: "pointer", textAlign: "left" }}
+                  onClick={() =>
+                    setOpenGroups((s) => ({ ...s, [g.admin_id]: !s[g.admin_id] }))
+                  }
+                  className="w-full flex items-center justify-between px-6 py-2 border-b border-[#f0f0f0] bg-transparent cursor-pointer text-left"
                 >
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span style={{ fontWeight: 600, color: "#0e0e0e", fontSize: "15px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-[#0e0e0e] text-[14px] overflow-hidden text-ellipsis whitespace-nowrap">
                         {g.admin_name}
                       </span>
                     </div>
-                    <span style={{ color: "rgba(14,14,14,0.5)", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <span className="text-[#0e0e0e]/50 text-xs inline-flex items-center gap-1">
                       {g.transactions.length} Sale{g.transactions.length !== 1 ? "s" : ""}
                       {showFlame && (
-                        <span style={{ display: "inline-flex", lineHeight: 1 }}>
+                        <span className="inline-flex leading-none">
                           <img
                             src="https://i.pinimg.com/originals/b7/03/7a/b7037a608cac4369cc7a2c5a6a891bc2.gif"
                             alt="fire"
-                            style={{ width: 24, height: 24, objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.25))" }}
+                            className="w-6 h-6 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
                           />
                         </span>
                       )}
                     </span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
-                      <span style={{ color: "rgba(14,14,14,0.5)", fontSize: "12px" }}>Total</span>
-                      <span style={{ fontWeight: 700, color: "#0e0e0e", fontSize: "15px", whiteSpace: "nowrap" }}>
+                  <div className="flex items-center gap-2.5 flex-shrink-0">
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="text-[#0e0e0e]/50 text-xs">Total</span>
+                      <span className="font-bold text-[#0e0e0e] text-[14px] whitespace-nowrap">
                         Rs. {formatAmount(g.total)}
                       </span>
                     </div>
-                    <span style={{ fontSize: "11px", color: "rgba(14,14,14,0.3)" }}>
+                    <span className="text-[11px] text-[#0e0e0e]/30">
                       {isOpen ? "▾" : "▸"}
                     </span>
                   </div>
                 </button>
 
                 {isOpen && (
-                  <div style={{ backgroundColor: "#fafafa", borderBottom: "1px solid #f0f0f0" }}>
+                  <div className="bg-[#fafafa] border-b border-[#f0f0f0]">
                     {g.transactions.map((t, i) => (
                       <div
                         key={t._id ?? `${t.invoice_id}-${i}`}
-                        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 32px", borderBottom: "1px solid #f0f0f0" }}
+                        className="flex items-center justify-between px-8 py-2 border-b border-[#f0f0f0]"
                       >
-                        <span style={{ color: "rgba(14,14,14,0.5)", fontSize: "11px", fontFamily: "monospace" }}>
+                        <span className="text-[#0e0e0e]/50 text-[11px] font-mono">
                           {t.invoice_id.slice(0, 10)} · {new Date(t.date).toLocaleTimeString()}
                         </span>
-                        <span style={{ fontWeight: 600, color: "#0e0e0e", fontSize: "13px" }}>
+                        <span className="font-semibold text-[#0e0e0e] text-[13px]">
                           Rs. {formatAmount(t.amount)}
                         </span>
                       </div>
