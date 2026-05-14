@@ -9,6 +9,27 @@ import { FrameScreen } from "./FrameScreen";
 
 import groupBg from "@/public/Group.png";
 
+// The design was built for a 1440px wide viewport.
+// On larger screens (TV, 4K) we scale the entire layout up uniformly.
+const DESIGN_WIDTH = 1440;
+
+function useScaleFactor() {
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    function update() {
+      const vw = window.innerWidth;
+      // Only scale up — never shrink below 1 (normal laptop/desktop stays as-is)
+      setScale(Math.max(1, vw / DESIGN_WIDTH));
+    }
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  return scale;
+}
+
 export function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [incoming, setIncoming] = useState<Transaction | null>(null);
@@ -21,6 +42,7 @@ export function Dashboard() {
   const incomingTimer = useRef<number | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const soundEnabledRef = useRef(soundEnabled);
+  const scale = useScaleFactor();
 
   const parseAmount = (v: number | string | undefined) => {
     if (v == null) return 0;
@@ -84,10 +106,7 @@ export function Dashboard() {
           audioRef.current?.play().catch(() => {});
         }
 
-        incomingTimer.current = window.setTimeout(
-          () => setIncoming(null),
-          6000,
-        );
+        incomingTimer.current = window.setTimeout(() => setIncoming(null), 6000);
       });
 
       socket.on("disconnect", () => console.log("Socket disconnected"));
@@ -132,8 +151,23 @@ export function Dashboard() {
       {/* Audio */}
       <audio ref={audioRef} preload="auto" src={audioSrc ?? undefined} />
 
-      {/* Main Content */}
-      <div className="relative z-10 w-full h-full">
+      {/* Main Content — scaled up uniformly on large screens */}
+      <div
+        className="relative z-10 w-full h-full"
+        style={{
+          // Scale the entire UI from the top-center origin.
+          // On a 1920px TV: scale = 1920/1440 = 1.33 → everything 33% bigger.
+          // On a 1440px laptop: scale = 1 → no change.
+          transform: scale !== 1 ? `scale(${scale})` : undefined,
+          transformOrigin: "top center",
+          // Prevent the scaled content from pushing the page height
+          // (the scaled element is visually larger but we keep the layout height as-is)
+          ...(scale !== 1 && {
+            width: `${(1 / scale) * 100}%`,
+            marginLeft: `${((1 - 1 / scale) / 2) * 100}%`,
+          }),
+        }}
+      >
         {/* Enable Sound Button */}
         {showSoundBtn && (
           <button
@@ -152,17 +186,17 @@ export function Dashboard() {
 
         {/* Header */}
         <header className="absolute top-4 left-1/2 -translate-x-1/2 text-center">
-          <h6 className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold italic text-[#0333f9] text-4xl tracking-[-0.96px] leading-[normal] whitespace-nowrap">
+          <h6 className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold text-[#0333f9] text-5xl tracking-[-0.96px] leading-[normal] whitespace-nowrap">
             LEADERBOARD
           </h6>
-          <p className="mt-2 [font-family:'Figtree-Medium',Helvetica] font-normal text-[#0e0e0e] text-sm text-center tracking-[-0.56px] leading-[normal] whitespace-nowrap">
+          <p className="mt-2 [font-family:'Figtree-Medium',Helvetica] font-normal text-[#0e0e0e] text-lg text-center tracking-[-0.56px] leading-[normal] whitespace-nowrap">
             <span className="font-medium tracking-[-0.16px]">Rs</span>
-            <span className="tracking-[-0.16px] [font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold italic">
+            <span className="tracking-[-0.16px] [font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
               {" "}
               {formatAmount(overall)}{" "}
             </span>
             <span className="font-medium tracking-[-0.16px]">across</span>
-            <span className="tracking-[-0.16px] [font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold italic">
+            <span className="tracking-[-0.16px] [font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
               {" "}
               {transactions.length} sales
             </span>
