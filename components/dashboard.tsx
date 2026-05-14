@@ -9,27 +9,6 @@ import { FrameScreen } from "./FrameScreen";
 
 import groupBg from "@/public/Group.png";
 
-// The design was built for a 1440px wide viewport.
-// On larger screens (TV, 4K) we scale the entire layout up uniformly.
-const DESIGN_WIDTH = 1440;
-
-function useScaleFactor() {
-  const [scale, setScale] = useState(1);
-
-  useEffect(() => {
-    function update() {
-      const vw = window.innerWidth;
-      // Only scale up — never shrink below 1 (normal laptop/desktop stays as-is)
-      setScale(Math.max(1, vw / DESIGN_WIDTH));
-    }
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  return scale;
-}
-
 export function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [incoming, setIncoming] = useState<Transaction | null>(null);
@@ -42,7 +21,6 @@ export function Dashboard() {
   const incomingTimer = useRef<number | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const soundEnabledRef = useRef(soundEnabled);
-  const scale = useScaleFactor();
 
   const parseAmount = (v: number | string | undefined) => {
     if (v == null) return 0;
@@ -135,7 +113,7 @@ export function Dashboard() {
 
   return (
     <main
-      className="bg-white w-full min-h-screen relative overflow-hidden"
+      className="bg-white w-full min-h-screen relative overflow-x-hidden"
       aria-label="Leaderboard page"
     >
       {/* Background Image */}
@@ -151,23 +129,8 @@ export function Dashboard() {
       {/* Audio */}
       <audio ref={audioRef} preload="auto" src={audioSrc ?? undefined} />
 
-      {/* Main Content — scaled up uniformly on large screens */}
-      <div
-        className="relative z-10 w-full h-full"
-        style={{
-          // Scale the entire UI from the top-center origin.
-          // On a 1920px TV: scale = 1920/1440 = 1.33 → everything 33% bigger.
-          // On a 1440px laptop: scale = 1 → no change.
-          transform: scale !== 1 ? `scale(${scale})` : undefined,
-          transformOrigin: "top center",
-          // Prevent the scaled content from pushing the page height
-          // (the scaled element is visually larger but we keep the layout height as-is)
-          ...(scale !== 1 && {
-            width: `${(1 / scale) * 100}%`,
-            marginLeft: `${((1 - 1 / scale) / 2) * 100}%`,
-          }),
-        }}
-      >
+      {/* Main Content */}
+      <div className="relative z-10 w-full h-full">
         {/* Enable Sound Button */}
         {showSoundBtn && (
           <button
@@ -176,27 +139,28 @@ export function Dashboard() {
               setShowSoundBtn(false);
               audioRef.current?.play().catch(() => {});
             }}
-            className="fixed right-8 top-8 bg-white/80 backdrop-blur border border-white/20 rounded-lg px-6 py-2 text-sm font-semibold hover:bg-white/90 transition-all duration-200 flex items-center gap-2 hover:scale-105 z-40"
+            className="fixed right-2 top-2 sm:right-4 sm:top-4 lg:right-8 lg:top-8 bg-white/80 backdrop-blur border border-white/20 rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 lg:px-6 lg:py-2 text-fluid-sm font-semibold hover:bg-white/90 transition-all duration-200 flex items-center gap-1 sm:gap-2 hover:scale-105 z-40"
             aria-label="Enable sound"
           >
-            <Icon icon="fluent:speaker-2-32-regular" width={24} height={24} />
-            <span className="text-[#0e0e0e]">Enable Sound</span>
+            <Icon icon="fluent:speaker-2-32-regular" className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+            <span className="text-[#0e0e0e] hidden sm:inline">Enable Sound</span>
+            <span className="text-[#0e0e0e] sm:hidden">Sound</span>
           </button>
         )}
 
         {/* Header */}
-        <header className="absolute top-4 left-1/2 -translate-x-1/2 text-center">
-          <h6 className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold text-[#0333f9] text-5xl tracking-[-0.96px] leading-[normal] whitespace-nowrap">
+        <header className="pt-2 sm:pt-3 lg:pt-4 px-2 sm:px-4 text-center">
+          <h6 className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold text-[#0333f9] text-fluid-4xl tracking-tight leading-tight">
             LEADERBOARD
           </h6>
-          <p className="mt-2 [font-family:'Figtree-Medium',Helvetica] font-normal text-[#0e0e0e] text-lg text-center tracking-[-0.56px] leading-[normal] whitespace-nowrap">
-            <span className="font-medium tracking-[-0.16px]">Rs</span>
-            <span className="tracking-[-0.16px] [font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
+          <p className="mt-1 [font-family:'Figtree-Medium',Helvetica] font-normal text-[#0e0e0e] text-fluid-base text-center tracking-tight leading-snug">
+            <span className="font-medium">Rs</span>
+            <span className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
               {" "}
               {formatAmount(overall)}{" "}
             </span>
-            <span className="font-medium tracking-[-0.16px]">across</span>
-            <span className="tracking-[-0.16px] [font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
+            <span className="font-medium">across</span>
+            <span className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
               {" "}
               {transactions.length} sales
             </span>
@@ -205,9 +169,9 @@ export function Dashboard() {
 
         {/* Incoming Flash Banner */}
         {incoming && (
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30">
-            <div className="mx-auto rounded-full bg-card/80 backdrop-blur border border-white/15 px-5 py-3 flex items-center justify-center gap-3 [box-shadow:0_10px_40px_-10px_rgba(255,255,255,0.18)]">
-              <span className="text-sm">
+          <div className="fixed bottom-2 sm:bottom-4 lg:bottom-8 left-1/2 -translate-x-1/2 z-30 px-2 w-full max-w-[95vw] sm:max-w-none sm:w-auto">
+            <div className="mx-auto rounded-full bg-card/80 backdrop-blur border border-white/15 px-3 py-2 sm:px-4 sm:py-2.5 lg:px-5 lg:py-3 flex items-center justify-center gap-2 sm:gap-3 [box-shadow:0_10px_40px_-10px_rgba(255,255,255,0.18)]">
+              <span className="text-fluid-sm truncate">
                 <span className="font-semibold text-black">
                   Rs. {formatAmount((incoming as any).amount)}
                 </span>{" "}
@@ -220,7 +184,7 @@ export function Dashboard() {
         )}
 
         {/* 3-column sales sections */}
-        <div className="absolute top-32 left-0 right-0 w-full flex justify-center">
+        <div className="pt-11 sm:pt-13 md:pt-15 lg:pt-18 px-2 sm:px-3.5 lg:px-5 pb-15 sm:pb-18">
           <FrameScreen transactions={transactions} />
         </div>
       </div>
