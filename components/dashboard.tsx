@@ -74,12 +74,27 @@ export function Dashboard() {
       socket.on("connect", () => console.log("Socket connected"));
 
       socket.on("new_transaction", (data: Transaction) => {
+        console.log("New transaction received:", data);
+        
         setTransactions((prev) => {
-          // Keep list bounded and avoid duplicate inserts from retries/reconnects.
-          if (prev.some((t) => t._id === data._id)) return prev;
+          // Check for duplicates by _id or invoice_id
+          const isDuplicate = prev.some(
+            (t) => t._id === data._id || t.invoice_id === data.invoice_id
+          );
+          
+          if (isDuplicate) {
+            console.log("Duplicate transaction detected, skipping");
+            return prev;
+          }
+          
+          // Add new transaction to the beginning
           const next = [data, ...prev];
+          console.log("Transaction added. Total transactions:", next.length);
+          
+          // Keep list bounded to prevent memory issues
           return next.length > 500 ? next.slice(0, 500) : next;
         });
+        
         setIncoming(data);
 
         if (incomingTimer.current) window.clearTimeout(incomingTimer.current);

@@ -79,12 +79,15 @@ export function SourceColumn({ source, transactions }: Props) {
   const groups = useMemo(() => {
     const map = new Map<string, Transaction[]>();
     transactions.forEach((t) => {
+      // Use admin_id as primary key, fallback to admin_name, then invoice_id
       const key = t.admin_id?.trim() || t.admin_name?.trim().toLowerCase() || t.invoice_id;
       const arr = map.get(key) ?? [];
       arr.push(t);
       map.set(key, arr);
     });
-    return Array.from(map.entries())
+    
+    // Convert to array and sort by total amount (descending)
+    const groupsArray = Array.from(map.entries())
       .map(([key, txs]) => ({
         key,
         admin_id: txs[0].admin_id ?? key,
@@ -93,6 +96,8 @@ export function SourceColumn({ source, transactions }: Props) {
         total: txs.reduce((s, t) => s + parseAmount(t.amount), 0),
       }))
       .sort((a, b) => b.total - a.total);
+    
+    return groupsArray;
   }, [transactions]);
 
   const columnTotal = useMemo(
@@ -200,7 +205,7 @@ export function SourceColumn({ source, transactions }: Props) {
               <div className="bg-[#fafafa] border-b border-[#f0f0f0]">
                 {topSeller.transactions.map((t, i) => (
                   <div
-                    key={t._id ?? `${t.invoice_id}-${i}`}
+                    key={`${t._id || t.invoice_id}-${i}`}
                     className="flex items-center justify-between px-3.5 sm:px-5 md:px-7 py-1.5 sm:py-2 border-b border-[#f0f0f0] last:border-b-0"
                   >
                     <span className="text-[#0e0e0e]/50 text-fluid-xs font-mono truncate">
@@ -269,7 +274,7 @@ export function SourceColumn({ source, transactions }: Props) {
                   <div className="bg-[#fafafa] border-b border-[#f0f0f0]">
                     {g.transactions.map((t, i) => (
                       <div
-                        key={t._id ?? `${t.invoice_id}-${i}`}
+                        key={`${t._id || t.invoice_id}-${i}`}
                         className="flex items-center justify-between px-3.5 sm:px-5 md:px-7 py-1.5 sm:py-2 border-b border-[#f0f0f0] last:border-b-0"
                       >
                         <span className="text-[#0e0e0e]/50 text-fluid-xs font-mono truncate">
