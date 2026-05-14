@@ -118,14 +118,14 @@ export function SourceColumn({ source, transactions }: Props) {
             {brand.label}
           </span>
         </div>
-        <span className="text-[#0e0e0e] text-xs whitespace-nowrap">
+        <span className="text-[#0e0e0e]  whitespace-nowrap">
           {transactions.length} Sale{transactions.length !== 1 ? "s" : ""} · Today
         </span>
       </div>
 
       {/* ── Total ── */}
       <div className="flex items-baseline gap-2 mb-8 lg:mb-4">
-        <span className="font-bold italic text-[#1f1f30] text-[24px] 2xl:text-[25px] leading-none">
+        <span className="font-bold italic text-[#1f1f30] text-[20px] 2xl:text-[25px] leading-none">
           Total:
         </span>
         <span className={`font-extrabold italic text-[24px] 2xl:text-[25px] leading-none ${brand.totalColor}`}>
@@ -143,20 +143,32 @@ export function SourceColumn({ source, transactions }: Props) {
               className={`relative ${brand.heroBg} ${brand.heroText} h-[160px] lg:h-[150px] p-5 pr-[155px] overflow-visible rounded-t-xl`}
             >
 
+              <Image
+                src="/logo/catch.png"
+                alt={topSeller.admin_name ?? "Top seller"}
+                width={200}        // set to the actual PNG's natural width
+                height={100}       // set to the actual PNG's natural height
+                className="absolute right-35 -top-10 translate-x-6 z-50 object-contain object-top h-[60px] w-auto"
+                quality={100}      // prevent Next.js compression
+              />
 
+              <Image
+                src="/logo/cover2.png"
+                alt={topSeller.admin_name ?? "Top seller"}
+                width={700}
+                height={70}
+                quality={200}
+                className="object-contain h-[90px] w-auto absolute right-40 top-25.5 translate-x-6 z-50 object-top"
+              />
               {/* Staff photo */}
-              <div className="absolute right-0 flex justify-end items-end bottom-0  w-[150px] h-[190px] 2xl:h-[240px]  overflow-visible! pointer-events-none z-20">
+              <div className="absolute right-0 flex justify-end z-20 items-end bottom-0  w-[150px] h-[180px] 2xl:h-[240px]  overflow-hidden! pointer-events-none ">
                 {imagePath ? (
                   <>
-                    <img
-                      src={"/logo/cover2.png"}
-                      alt={topSeller.admin_name ?? "Top seller"}
-                      className=" object-contain h-[90px] absolute right-45 translate-x-6 z-20  object-top 2xl:object-bottom!"
-                    />
+
                     <img
                       src={imagePath}
                       alt={topSeller.admin_name ?? "Top seller"}
-                      className=" object-contain 2xl:h-[210px]!  object-top 2xl:object-bottom!"
+                      className=" object-contain h-full  object-top!"
                     />
                     <div className="absolute inset-0 pointer-events-none" />
                   </>
@@ -175,7 +187,7 @@ export function SourceColumn({ source, transactions }: Props) {
                   <span className="leading-none inline-flex text-[#ffd23f]">
                     <Icon icon="material-symbols:crown" width={28} height={28} className={`${brand.label.toLocaleLowerCase() == "babal host" ? "text-[#ffffff]" : ""}`} />
                   </span>
-                  <span className="text-xs 2xl:text-xl font-semibold text-nowrap! truncate leading-snug">
+                  <span className="text-lg 2xl:text-xl font-semibold tracking-wide text-nowrap! truncate leading-snug">
                     {topSeller.admin_name}
                   </span>
                 </div>
@@ -251,7 +263,7 @@ export function SourceColumn({ source, transactions }: Props) {
                         {g.admin_name}
                       </span>
                     </div>
-                    <span className="text-[#0e0e0e]/50 text-xs inline-flex items-center gap-1">
+                    <span className="text-[#0e0e0e]/50 text-lg inline-flex items-center gap-1">
                       {g.transactions.length} Sale{g.transactions.length !== 1 ? "s" : ""}
                       {showFlame && (
                         <span className="inline-flex leading-none">
@@ -266,7 +278,7 @@ export function SourceColumn({ source, transactions }: Props) {
                   </div>
                   <div className="flex items-center gap-2.5 flex-shrink-0">
                     <div className="flex flex-col items-end gap-0.5">
-                      <span className="text-[#0e0e0e]/50 text-xs">Total</span>
+                      <span className="text-[#0e0e0e]/50 text-lg">Total</span>
                       <span className="font-bold text-[#0e0e0e] text-[14px] whitespace-nowrap">
                         Rs. {formatAmount(g.total)}
                       </span>
