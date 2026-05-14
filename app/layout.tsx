@@ -12,6 +12,12 @@ export const metadata: Metadata = {
   description:
     "Real-time sales tracking across Nest Nepal, Nest SMS, and Babal Host platforms",
   generator: "v0.app",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
   icons: {
     icon: [
       {

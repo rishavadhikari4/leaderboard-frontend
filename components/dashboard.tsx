@@ -91,6 +91,8 @@ export function Dashboard() {
         });
         if (res.ok) {
           const data: Transaction[] = await res.json();
+          console.log("Initial data fetched:", data.length, "transactions");
+          // Reverse to show newest first
           setTransactions([...data].reverse());
         } else {
           console.error("Failed to fetch transactions", res.status);
@@ -112,22 +114,48 @@ export function Dashboard() {
       socket.on("connect", () => console.log("Socket connected"));
 
       socket.on("new_transaction", (data: Transaction) => {
-        setTransactions((prev) => {
-          // Keep list bounded and avoid duplicate inserts from retries/reconnects.
-          if (prev.some((t) => t._id === data._id)) return prev;
-          const next = [data, ...prev];
-          return next.length > 500 ? next.slice(0, 500) : next;
-        });
+        console.log("New transaction received:", data);
+
+        // First, update the incoming banner immediately
         setIncoming(data);
 
+        // Then update the transactions list
+        setTransactions((prev) => {
+          // Check for duplicates by _id or invoice_id
+          const isDuplicate = prev.some(
+            (t) => t._id === data._id || t.invoice_id === data.invoice_id
+          );
+
+          if (isDuplicate) {
+            console.log("Duplicate transaction detected, skipping");
+            return prev;
+          }
+
+          // Add new transaction to the beginning
+          const next = [data, ...prev];
+          console.log("Transaction added. Total transactions:", next.length);
+          console.log("Admin:", data.admin_name, "Amount:", data.amount, "Source:", data.source);
+
+          // Keep list bounded to prevent memory issues
+          return next.length > 500 ? next.slice(0, 500) : next;
+        });
+
+        // Clear any existing timer
         if (incomingTimer.current) window.clearTimeout(incomingTimer.current);
 
-        const amountVal = parseAmount((data as any).amount);
+        // Play sound if amount >= 10000
+        const amountVal = parseAmount(data.amount);
+        console.log("Amount parsed:", amountVal, "Sound enabled:", soundEnabledRef.current);
+
         if (soundEnabledRef.current && amountVal >= 10000) {
           audioRef.current?.play().catch(() => { });
         }
 
-        incomingTimer.current = window.setTimeout(() => setIncoming(null), 6000);
+        // Hide incoming banner after 6 seconds
+        incomingTimer.current = window.setTimeout(() => {
+          console.log("Hiding incoming banner");
+          setIncoming(null);
+        }, 6000);
       });
 
       socket.on("disconnect", () => console.log("Socket disconnected"));
@@ -201,14 +229,14 @@ export function Dashboard() {
           <h6 className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-bold text-[#0333f9] text-2xl sm:text-4xl  tracking-[-0.96px] leading-[normal] whitespace-nowrap">
             LEADERBOARD
           </h6>
-          <p className="mt-2 [font-family:'Figtree-Medium',Helvetica] font-normal text-[#0e0e0e] text-lg text-center tracking-[-0.56px] leading-[normal] whitespace-nowrap">
-            <span className="font-medium tracking-[-0.16px]">Rs</span>
-            <span className="tracking-[-0.16px] [font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
+          <p className="mt-1 [font-family:'Figtree-Medium',Helvetica] font-normal text-[#0e0e0e] text-fluid-base text-center tracking-tight leading-snug">
+            <span className="font-medium">Rs</span>
+            <span className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
               {" "}
               {formatAmount(overall)}{" "}
             </span>
-            <span className="font-medium tracking-[-0.16px]">across</span>
-            <span className="tracking-[-0.16px] [font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
+            <span className="font-medium">across</span>
+            <span className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
               {" "}
               {transactions.length} sales
             </span>
@@ -221,10 +249,10 @@ export function Dashboard() {
             <div className="mx-auto rounded-full bg-card/80 backdrop-blur border border-white/15 px-5 py-3 flex items-center justify-center gap-3 [box-shadow:0_10px_40px_-10px_rgba(255,255,255,0.18)]">
               <span className="text-sm">
                 <span className="font-semibold text-black">
-                  Rs. {formatAmount((incoming as any).amount)}
+                  Rs. {formatAmount(incoming.amount)}
                 </span>{" "}
                 <span className="text-muted-foreground">
-                  · {incoming.source} · {incoming.admin_name}
+                  · {incoming.source} · {incoming.admin_name || "Unknown"}
                 </span>
               </span>
             </div>
