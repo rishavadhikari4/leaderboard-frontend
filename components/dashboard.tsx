@@ -115,19 +115,26 @@ export function Dashboard() {
 
       socket.on("new_transaction", (data: Transaction) => {
         console.log("New transaction received:", data);
-
+        console.log("Transaction _id:", data._id, "invoice_id:", data.invoice_id);
+        
         // First, update the incoming banner immediately
         setIncoming(data);
 
         // Then update the transactions list
         setTransactions((prev) => {
-          // Check for duplicates by _id or invoice_id
-          const isDuplicate = prev.some(
-            (t) => t._id === data._id || t.invoice_id === data.invoice_id
-          );
-
+          // Check for duplicates - only check if _id exists, otherwise check invoice_id + date
+          const isDuplicate = prev.some((t) => {
+            // If both have _id, compare _id
+            if (t._id && data._id) {
+              return t._id === data._id;
+            }
+            // Otherwise compare invoice_id AND date to avoid false positives
+            return t.invoice_id === data.invoice_id && t.date === data.date;
+          });
+          
           if (isDuplicate) {
             console.log("Duplicate transaction detected, skipping");
+            console.log("Existing transactions:", prev.map(t => ({ id: t._id, invoice: t.invoice_id, date: t.date })));
             return prev;
           }
 
