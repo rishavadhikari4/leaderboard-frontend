@@ -104,7 +104,7 @@ export function SourceColumn({ source, transactions }: Props) {
     <section aria-label={`${brand.label} sales`} className="flex flex-col w-full relative">
 
       {/* ── Header: logo + name + count ── */}
-      <div className="flex items-center justify-between mb-1.5 min-h-[70px] relative z-0">
+      <div className="flex items-center justify-between mb-1.5 min-h-[50px] lg:min-h-[70px] relative z-0">
         <div className="flex items-center gap-2.5 ">
           <Image
             src={brand.logo}
@@ -124,7 +124,7 @@ export function SourceColumn({ source, transactions }: Props) {
       </div>
 
       {/* ── Total ── */}
-      <div className="flex items-baseline gap-2 mb-4">
+      <div className="flex items-baseline gap-2 mb-8 lg:mb-4">
         <span className="font-bold italic text-[#1f1f30] text-[24px] 2xl:text-[25px] leading-none">
           Total:
         </span>
@@ -140,12 +140,19 @@ export function SourceColumn({ source, transactions }: Props) {
         {topSeller ? (
           <>
             <div
-              className={`relative ${brand.heroBg} ${brand.heroText} h-[150px] p-5 pr-[155px] overflow-visible rounded-t-xl`}
+              className={`relative ${brand.heroBg} ${brand.heroText} h-[160px] lg:h-[150px] p-5 pr-[155px] overflow-visible rounded-t-xl`}
             >
+
+
               {/* Staff photo */}
-              <div className="absolute right-0 2xl:flex justify-end items-end bottom-0  w-[150px] h-[190px] 2xl:h-[240px]  overflow-hidden! pointer-events-none z-20">
+              <div className="absolute right-0 flex justify-end items-end bottom-0  w-[150px] h-[190px] 2xl:h-[240px]  overflow-visible! pointer-events-none z-20">
                 {imagePath ? (
                   <>
+                    <img
+                      src={"/logo/cover2.png"}
+                      alt={topSeller.admin_name ?? "Top seller"}
+                      className=" object-contain h-[90px] absolute right-45 translate-x-6 z-20  object-top 2xl:object-bottom!"
+                    />
                     <img
                       src={imagePath}
                       alt={topSeller.admin_name ?? "Top seller"}
@@ -190,9 +197,9 @@ export function SourceColumn({ source, transactions }: Props) {
               </div>
 
               {/* Total */}
-              <div className="mt-1.5 2xl:mt-2.5">
+              <div className="mt-1.5 2xl:mt-2.5 relative z-50">
                 <div className="text-[11px] opacity-70 mb-0.5">Total</div>
-                <div className="text-sm 2xl:text-[28px] font-bold lg:text-nowrap leading-none tracking-tight">
+                <div className="text-sm 2xl:text-[25px] font-bold lg:text-nowrap leading-none tracking-tight">
                   Rs. {formatAmount(topSeller.total)}
                 </div>
               </div>
