@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import { getStaffImage } from "@/lib/staffMap";
 
@@ -75,6 +75,12 @@ const PHOTO_HEIGHT = 240;
 export function SourceColumn({ source, transactions }: Props) {
   const brand = brandConfig[source];
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [updateKey, setUpdateKey] = useState(0);
+
+  // Force re-render when transactions change
+  useEffect(() => {
+    setUpdateKey((prev) => prev + 1);
+  }, [transactions.length]);
 
   const groups = useMemo(() => {
     const map = new Map<string, Transaction[]>();
@@ -110,6 +116,7 @@ export function SourceColumn({ source, transactions }: Props) {
 
   return (
     <section
+      key={`${source}-${updateKey}-${transactions.length}`}
       aria-label={`${brand.label} sales`}
       className="flex flex-col w-full relative"
     >

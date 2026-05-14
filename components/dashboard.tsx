@@ -53,6 +53,8 @@ export function Dashboard() {
         });
         if (res.ok) {
           const data: Transaction[] = await res.json();
+          console.log("Initial data fetched:", data.length, "transactions");
+          // Reverse to show newest first
           setTransactions([...data].reverse());
         } else {
           console.error("Failed to fetch transactions", res.status);
@@ -76,6 +78,10 @@ export function Dashboard() {
       socket.on("new_transaction", (data: Transaction) => {
         console.log("New transaction received:", data);
         
+        // First, update the incoming banner immediately
+        setIncoming(data);
+        
+        // Then update the transactions list
         setTransactions((prev) => {
           // Check for duplicates by _id or invoice_id
           const isDuplicate = prev.some(
@@ -90,21 +96,31 @@ export function Dashboard() {
           // Add new transaction to the beginning
           const next = [data, ...prev];
           console.log("Transaction added. Total transactions:", next.length);
+          console.log("Admin:", data.admin_name, "Amount:", data.amount, "Source:", data.source);
           
           // Keep list bounded to prevent memory issues
           return next.length > 500 ? next.slice(0, 500) : next;
         });
-        
-        setIncoming(data);
 
+        // Clear any existing timer
         if (incomingTimer.current) window.clearTimeout(incomingTimer.current);
 
-        const amountVal = parseAmount((data as any).amount);
+        // Play sound if amount >= 10000
+        const amountVal = parseAmount(data.amount);
+        console.log("Amount parsed:", amountVal, "Sound enabled:", soundEnabledRef.current);
+        
         if (soundEnabledRef.current && amountVal >= 10000) {
-          audioRef.current?.play().catch(() => {});
+          console.log("Playing sound for amount:", amountVal);
+          audioRef.current?.play().catch((err) => {
+            console.error("Error playing sound:", err);
+          });
         }
 
-        incomingTimer.current = window.setTimeout(() => setIncoming(null), 6000);
+        // Hide incoming banner after 6 seconds
+        incomingTimer.current = window.setTimeout(() => {
+          console.log("Hiding incoming banner");
+          setIncoming(null);
+        }, 6000);
       });
 
       socket.on("disconnect", () => console.log("Socket disconnected"));
@@ -189,14 +205,17 @@ export function Dashboard() {
 
         {/* Incoming Flash Banner */}
         {incoming && (
-          <div className="fixed bottom-2 sm:bottom-4 lg:bottom-8 left-1/2 -translate-x-1/2 z-30 px-2 w-full max-w-[95vw] sm:max-w-none sm:w-auto">
+          <div 
+            key={`incoming-${incoming._id || incoming.invoice_id}-${Date.now()}`}
+            className="fixed bottom-2 sm:bottom-4 lg:bottom-8 left-1/2 -translate-x-1/2 z-30 px-2 w-full max-w-[95vw] sm:max-w-none sm:w-auto animate-in fade-in slide-in-from-bottom-4 duration-300"
+          >
             <div className="mx-auto rounded-full bg-card/80 backdrop-blur border border-white/15 px-3 py-2 sm:px-4 sm:py-2.5 lg:px-5 lg:py-3 flex items-center justify-center gap-2 sm:gap-3 [box-shadow:0_10px_40px_-10px_rgba(255,255,255,0.18)]">
               <span className="text-fluid-sm truncate">
                 <span className="font-semibold text-black">
-                  Rs. {formatAmount((incoming as any).amount)}
+                  Rs. {formatAmount(incoming.amount)}
                 </span>{" "}
                 <span className="text-muted-foreground">
-                  · {incoming.source} · {incoming.admin_name}
+                  · {incoming.source} · {incoming.admin_name || "Unknown"}
                 </span>
               </span>
             </div>
