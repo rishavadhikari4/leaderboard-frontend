@@ -139,24 +139,24 @@ export function SourceColumn({ source, transactions }: Props) {
         {/* ── Hero banner ── */}
         {topSeller ? (
           <>
-            <div className={`h-[150px] relative ${brand.heroBg} p-6 rounded-t-xl`}>
+            <div className={`h-[120px] relative ${brand.heroBg} p-6 rounded-t-xl`}>
               {/* Cover image */}
               <div className="absolute right-25 z-20 bottom-0">
                 <img
                   src="/logo/cover2.png"
                   alt="Leaderboard"
-                  className="object-contain translate-x-[25%] object-bottom w-[120px]"
+                  className="object-contain translate-x-[25%] object-bottom w-[95px]"
                 />
               </div>
 
               {/* Staff photo */}
-              <div className="absolute bottom-0 right-0 w-[150px] h-[190px]">
+              <div className="absolute -bottom-0 -right-0 w-[150px] h-[150px]">
                 <div className="h-full w-full relative overflow-hidden">
                   {imagePath ? (
                     <img
                       src={imagePath}
                       alt={topSeller.admin_name ?? "Top seller"}
-                      className="object-contain translate-x-[25%] object-bottom h-full w-full"
+                      className="object-contain translate-x-[26%] object-bottom h-full w-full"
                     />
                   ) : (
                     <div
@@ -169,7 +169,7 @@ export function SourceColumn({ source, transactions }: Props) {
               </div>
 
               {/* Crown + name + sales count */}
-              <div className="flex pt-5 items-center gap-4">
+              <div className="flex pt-3 items-center gap-4">
                 <h2 className={`text-xl relative font-semibold ${brand.heroText}`}>
                   <div className="absolute top-0 -translate-y-[100%] left-0">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="11" viewBox="0 0 18 11" fill="none">
@@ -253,9 +253,9 @@ export function SourceColumn({ source, transactions }: Props) {
 
               {/* Total */}
               <div className="mt-4">
-                <p className={`text-sm opacity-70 ${brand.heroText}`}>Total</p>
+                <p className={` opacity-70 ${brand.heroText}`}>Total Rs.</p>
                 <p className={`text-[18px] font-bold ${brand.heroText}`}>
-                  Rs. {formatAmount(topSeller.total)}
+                  {formatAmount(topSeller.total)}
                 </p>
               </div>
             </div>
