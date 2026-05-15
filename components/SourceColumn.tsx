@@ -101,7 +101,7 @@ export function SourceColumn({ source, transactions }: Props) {
   const imagePath = topSeller ? getStaffImage(topSeller.admin_id) : null;
 
   return (
-    <section aria-label={`${brand.label} sales`} className="flex flex-col w-full relative">
+    <section aria-label={`${brand.label} sales`} className="flex md:scale-95 flex-col w-full relative">
 
       {/* ── Header: logo + name + count ── */}
       <div className="flex items-center justify-between mb-1.5 min-h-[50px] lg:min-h-[70px] relative z-0">
@@ -139,58 +139,102 @@ export function SourceColumn({ source, transactions }: Props) {
         {/* ── Hero banner ── */}
         {topSeller ? (
           <>
-            <div
-              className={`relative ${brand.heroBg} ${brand.heroText} h-[160px] lg:h-[150px] p-5 pr-[155px] overflow-visible rounded-t-xl`}
-            >
+            <div className={`h-[150px] relative ${brand.heroBg} p-6 rounded-t-xl`}>
+              {/* Cover image */}
+              <div className="absolute right-25 z-20 bottom-0">
+                <img
+                  src="/logo/cover2.png"
+                  alt="Leaderboard"
+                  className="object-contain translate-x-[25%] object-bottom w-[120px]"
+                />
+              </div>
 
-              <Image
-                src="/logo/catch.png"
-                alt={topSeller.admin_name ?? "Top seller"}
-                width={200}        // set to the actual PNG's natural width
-                height={100}       // set to the actual PNG's natural height
-                className="absolute right-35 -top-10 translate-x-6 z-50 object-contain object-top h-[60px] w-auto"
-                quality={100}      // prevent Next.js compression
-              />
-
-              <Image
-                src="/logo/cover2.png"
-                alt={topSeller.admin_name ?? "Top seller"}
-                width={700}
-                height={70}
-                quality={200}
-                className="object-contain h-[90px] w-auto absolute right-40 top-25.5 translate-x-6 z-50 object-top"
-              />
               {/* Staff photo */}
-              <div className="absolute right-0 flex justify-end z-20 items-end bottom-0  w-[150px] h-[180px] 2xl:h-[240px]  overflow-hidden! pointer-events-none ">
-                {imagePath ? (
-                  <>
-
+              <div className="absolute bottom-0 right-0 w-[150px] h-[190px]">
+                <div className="h-full w-full relative overflow-hidden">
+                  {imagePath ? (
                     <img
                       src={imagePath}
                       alt={topSeller.admin_name ?? "Top seller"}
-                      className=" object-contain h-full  object-top!"
+                      className="object-contain translate-x-[25%] object-bottom h-full w-full"
                     />
-                    <div className="absolute inset-0 pointer-events-none" />
-                  </>
-                ) : (
-                  <div
-                    className={`absolute bottom-4 right-4  w-20 h-20 rounded-full bg-white/25 flex items-center justify-center text-[26px] font-bold border-[3px] border-white/40 ${brand.heroText}`}
-                  >
-                    {getInitials(topSeller.admin_name ?? "?")}
-                  </div>
-                )}
+                  ) : (
+                    <div
+                      className={`absolute bottom-4 right-4 w-20 h-20 rounded-full bg-white/25 flex items-center justify-center text-[26px] font-bold border-[3px] border-white/40 ${brand.heroText}`}
+                    >
+                      {getInitials(topSeller.admin_name ?? "?")}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Crown + name row */}
-              <div className="flex items-start justify-between mb-1">
-                <div className="flex flex-col gap-0.5">
-                  <span className="leading-none inline-flex text-[#ffd23f]">
-                    <Icon icon="material-symbols:crown" width={28} height={28} className={`${brand.label.toLocaleLowerCase() == "babal host" ? "text-[#ffffff]" : ""}`} />
-                  </span>
-                  <span className="text-lg 2xl:text-xl font-semibold tracking-wide text-nowrap! truncate leading-snug">
-                    {topSeller.admin_name}
-                  </span>
-                </div>
+              {/* Crown + name + sales count */}
+              <div className="flex pt-5 items-center gap-4">
+                <h2 className={`text-xl relative font-semibold ${brand.heroText}`}>
+                  <div className="absolute top-0 -translate-y-[100%] left-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="11" viewBox="0 0 18 11" fill="none">
+                      <g clipPath="url(#clip0_1168_4354)">
+                        <path d="M4.92761 2.58789L9.00048 6.90179V9.92111L3.19922 8.15822L4.92761 2.58789Z" fill="url(#paint0_linear_1168_4354)" />
+                        <path d="M13.0725 2.58789L9 6.90179V9.92111L14.8013 8.15822L13.0725 2.58789Z" fill="url(#paint1_linear_1168_4354)" />
+                        <path d="M14.0963 9.92188H3.90332V11.0002H14.0963V9.92188Z" fill="url(#paint2_linear_1168_4354)" />
+                        <path d="M12.0901 6.5236L8.99977 1.18555L5.90942 6.5236L1.19238 3.28834L3.90329 9.92063H8.99977H14.0962L16.8068 3.28834L12.0901 6.5236Z" fill="url(#paint3_linear_1168_4354)" />
+                        <path d="M10.1922 1.18627C10.1922 0.951649 10.1223 0.722296 9.99119 0.527215C9.86013 0.332134 9.67384 0.180086 9.45589 0.0903C9.23793 0.00051394 8.9981 -0.0229781 8.76673 0.0227944C8.53535 0.0685669 8.32281 0.181548 8.156 0.347451C7.98919 0.513354 7.87558 0.724728 7.82956 0.954842C7.78354 1.18496 7.80716 1.42348 7.89744 1.64024C7.98772 1.857 8.1406 2.04227 8.33675 2.17262C8.5329 2.30297 8.76352 2.37254 8.99943 2.37254C9.15608 2.37259 9.3112 2.34193 9.45594 2.28233C9.60067 2.22273 9.73218 2.13536 9.84295 2.02519C9.95372 1.91503 10.0416 1.78424 10.1015 1.64029C10.1614 1.49635 10.1923 1.34207 10.1922 1.18627Z" fill="url(#paint4_linear_1168_4354)" />
+                        <path d="M17.9998 3.28979C17.9998 3.05516 17.9299 2.82581 17.7988 2.63073C17.6677 2.43565 17.4815 2.2836 17.2635 2.19382C17.0456 2.10403 16.8057 2.08054 16.5743 2.12631C16.343 2.17208 16.1304 2.28506 15.9636 2.45097C15.7968 2.61687 15.6832 2.82824 15.6372 3.05836C15.5912 3.28847 15.6148 3.52699 15.7051 3.74375C15.7953 3.96052 15.9482 4.14579 16.1444 4.27614C16.3405 4.40648 16.5711 4.47606 16.807 4.47606C17.1234 4.47606 17.4268 4.35108 17.6505 4.12861C17.8742 3.90614 17.9998 3.60441 17.9998 3.28979Z" fill="url(#paint5_linear_1168_4354)" />
+                        <path d="M2.38557 3.28979C2.38557 3.05516 2.31562 2.82581 2.18455 2.63073C2.05349 2.43565 1.8672 2.2836 1.64925 2.19382C1.43129 2.10403 1.19146 2.08054 0.960085 2.12631C0.728707 2.17208 0.516173 2.28506 0.349359 2.45097C0.182545 2.61687 0.0689435 2.82824 0.0229196 3.05836C-0.0231043 3.28847 0.000516762 3.52699 0.0907959 3.74375C0.181075 3.96052 0.333957 4.14579 0.53011 4.27614C0.726263 4.40648 0.956875 4.47606 1.19279 4.47606C1.5091 4.47597 1.81244 4.35096 2.03611 4.12851C2.25978 3.90606 2.38548 3.60438 2.38557 3.28979Z" fill="url(#paint6_linear_1168_4354)" />
+                        <path d="M9.00059 5.55469L7.98828 7.16022L9.00059 8.76576L10.0126 7.16022L9.00059 5.55469Z" fill="#FF29E6" />
+                        <path d="M8.99968 5.55469L8.83496 7.16022L8.99968 8.76576L10.0117 7.16022L8.99968 5.55469Z" fill="#B607A1" />
+                      </g>
+                      <defs>
+                        <linearGradient id="paint0_linear_1168_4354" x1="6.09985" y1="-0.903826" x2="6.09985" y2="7.77063" gradientUnits="userSpaceOnUse">
+                          <stop offset="0.01" stopColor="#FED33C" />
+                          <stop offset="0.16" stopColor="#FEC831" />
+                          <stop offset="0.71" stopColor="#FFA50E" />
+                          <stop offset="1" stopColor="#FF9800" />
+                        </linearGradient>
+                        <linearGradient id="paint1_linear_1168_4354" x1="11.9006" y1="-0.903826" x2="11.9006" y2="7.77063" gradientUnits="userSpaceOnUse">
+                          <stop offset="0.01" stopColor="#FED33C" />
+                          <stop offset="0.16" stopColor="#FEC831" />
+                          <stop offset="0.71" stopColor="#FFA50E" />
+                          <stop offset="1" stopColor="#FF9800" />
+                        </linearGradient>
+                        <linearGradient id="paint2_linear_1168_4354" x1="8.9998" y1="9.6368" x2="8.9998" y2="11.1473" gradientUnits="userSpaceOnUse">
+                          <stop offset="0.01" stopColor="#FED33C" />
+                          <stop offset="0.16" stopColor="#FEC831" />
+                          <stop offset="0.71" stopColor="#FFA50E" />
+                          <stop offset="1" stopColor="#FF9800" />
+                        </linearGradient>
+                        <linearGradient id="paint3_linear_1168_4354" x1="8.99977" y1="1.74582" x2="8.99977" y2="11.1566" gradientUnits="userSpaceOnUse">
+                          <stop offset="0.01" stopColor="#FED33C" />
+                          <stop offset="0.16" stopColor="#FEC831" />
+                          <stop offset="0.71" stopColor="#FFA50E" />
+                          <stop offset="1" stopColor="#FF9800" />
+                        </linearGradient>
+                        <linearGradient id="paint4_linear_1168_4354" x1="8.99943" y1="-0.120568" x2="8.99943" y2="2.16819" gradientUnits="userSpaceOnUse">
+                          <stop offset="0.01" stopColor="#FED33C" />
+                          <stop offset="0.16" stopColor="#FEC831" />
+                          <stop offset="0.71" stopColor="#FFA50E" />
+                          <stop offset="1" stopColor="#FF9800" />
+                        </linearGradient>
+                        <linearGradient id="paint5_linear_1168_4354" x1="16.807" y1="2.10862" x2="16.807" y2="4.66509" gradientUnits="userSpaceOnUse">
+                          <stop offset="0.01" stopColor="#FED33C" />
+                          <stop offset="0.16" stopColor="#FEC831" />
+                          <stop offset="0.71" stopColor="#FFA50E" />
+                          <stop offset="1" stopColor="#FF9800" />
+                        </linearGradient>
+                        <linearGradient id="paint6_linear_1168_4354" x1="1.19279" y1="1.98806" x2="1.19279" y2="4.33778" gradientUnits="userSpaceOnUse">
+                          <stop offset="0.01" stopColor="#FED33C" />
+                          <stop offset="0.16" stopColor="#FEC831" />
+                          <stop offset="0.71" stopColor="#FFA50E" />
+                          <stop offset="1" stopColor="#FF9800" />
+                        </linearGradient>
+                        <clipPath id="clip0_1168_4354">
+                          <rect width="18" height="11" fill="white" />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </div>
+                  {topSeller.admin_name}
+                </h2>
                 <button
                   type="button"
                   onClick={() =>
@@ -200,8 +244,7 @@ export function SourceColumn({ source, transactions }: Props) {
                     }))
                   }
                   aria-expanded={!!openGroups[topSeller.admin_id]}
-                  className="text-[11px] opacity-70 whitespace-nowrap pt-0.5 bg-transparent border-none cursor-pointer"
-                  style={{ color: "inherit" }}
+                  className={`text-[11px] opacity-70 whitespace-nowrap pt-0.5 bg-transparent border-none cursor-pointer ${brand.heroText}`}
                 >
                   {topSeller.transactions.length} Sale{topSeller.transactions.length !== 1 ? "s" : ""}{" "}
                   {openGroups[topSeller.admin_id] ? "▾" : "▸"}
@@ -209,11 +252,11 @@ export function SourceColumn({ source, transactions }: Props) {
               </div>
 
               {/* Total */}
-              <div className="mt-1.5 2xl:mt-2.5 relative z-50">
-                <div className="text-[11px] opacity-70 mb-0.5">Total</div>
-                <div className="text-sm 2xl:text-[25px] font-bold lg:text-nowrap leading-none tracking-tight">
+              <div className="mt-4">
+                <p className={`text-sm opacity-70 ${brand.heroText}`}>Total</p>
+                <p className={`text-[18px] font-bold ${brand.heroText}`}>
                   Rs. {formatAmount(topSeller.total)}
-                </div>
+                </p>
               </div>
             </div>
 
