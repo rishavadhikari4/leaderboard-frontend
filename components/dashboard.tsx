@@ -9,8 +9,20 @@ import { FrameScreen } from "./FrameScreen";
 
 import groupBg from "@/public/Group.png";
 
+/**
+ * A Transaction as it arrives from the API / socket.
+ * Extended with `sales_count` and `total_amount` so FrameScreen
+ * can display per-person aggregates.
+ */
+export type AggregatedTransaction = Transaction & {
+  sales_count: number;   // how many individual invoices this person has made today
+  total_amount: number;  // running numeric total (avoids re-parsing on every render)
+};
+
 export function Dashboard() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  // One entry per salesperson, keyed by admin_id
+  const [roster, setRoster] = useState<Map<string, AggregatedTransaction>>(new Map());
+
   const [incoming, setIncoming] = useState<Transaction | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [showSoundBtn, setShowSoundBtn] = useState(true);
@@ -23,6 +35,8 @@ export function Dashboard() {
   const socketRef = useRef<Socket | null>(null);
   const soundEnabledRef = useRef(soundEnabled);
   const isMountedRef = useRef(true);
+
+  // ─── Helpers ────────────────────────────────────────────────────────────────
 
   const parseAmount = (v: number | string | undefined | null): number => {
     if (v == null) return 0;
@@ -40,23 +54,97 @@ export function Dashboard() {
     });
   };
 
-  /**
-   * Normalize any incoming transaction payload so that downstream
-   * components always receive a fully-shaped Transaction object,
-   * regardless of which source sent it (SMS, Nest Nepal, Babal Host, …).
-   */
+  /** Normalize raw socket/API payload into a fully-shaped Transaction */
   const normalizeTransaction = (data: Partial<Transaction>): Transaction => ({
-    // _id is optional — leave undefined rather than coercing to a bad value
     _id: (data as any)._id ?? undefined,
     invoice_id: data.invoice_id as string ?? 0,
-    source: data.source ?? "nest" ,
-    admin_id: data.admin_id as string ?? 0 ,
+    source: data.source ?? "unknown",
+    admin_id: data.admin_id as string ?? 0,
     admin_name: data.admin_name?.trim() || "Unknown",
     amount: data.amount ?? 0,
     date: data.date ?? new Date().toISOString(),
   });
 
-  /** Guards readyState and swallows unhandled promise rejections from play() */
+  /**
+   * Merge one transaction into the roster map.
+   *
+   * Same person  → add amount to their running total, increment sales_count
+   * New person   → insert fresh entry with sales_count = 1
+   *
+   * Always returns a NEW Map so React detects the state change.
+   */
+  const mergeIntoRoster = (
+    prev: Map<string, AggregatedTransaction>,
+    tx: Transaction,
+  ): Map<string, AggregatedTransaction> => {
+    // Stringify so numeric and string admin_ids both resolve to the same key
+    const key = String(tx.admin_id || tx.admin_name || "unknown");
+    const txAmount = parseAmount(tx.amount);
+    const next = new Map(prev);
+
+    if (next.has(key)) {
+      const existing = next.get(key)!;
+      const newTotal = existing.total_amount + txAmount;
+      next.set(key, {
+        ...existing,
+        amount: newTotal,          // keep amount in sync with total_amount
+        total_amount: newTotal,
+        sales_count: existing.sales_count + 1,
+        // Update to the latest transaction's metadata
+        invoice_id: tx.invoice_id,
+        date: tx.date,
+        source: tx.source,
+      });
+      console.log(
+        `Updated ${existing.admin_name}: total=${newTotal}, sales=${existing.sales_count + 1}`,
+      );
+    } else {
+      next.set(key, {
+        ...tx,
+        total_amount: txAmount,
+        sales_count: 1,
+      });
+      console.log(`New member added: ${tx.admin_name}, amount=${txAmount}`);
+    }
+
+    return next;
+  };
+
+  /**
+   * Build initial roster from the today's-invoices list.
+   * The REST API returns one row per invoice; we fold them into one row per person.
+   */
+  const buildRosterFromList = (
+    list: Partial<Transaction>[],
+  ): Map<string, AggregatedTransaction> => {
+    let map = new Map<string, AggregatedTransaction>();
+    for (const raw of list) {
+      map = mergeIntoRoster(map, normalizeTransaction(raw));
+    }
+    return map;
+  };
+
+  // Sorted array derived from the roster — sorted by total_amount descending
+  const transactions = useMemo<AggregatedTransaction[]>(
+    () =>
+      Array.from(roster.values()).sort((a, b) => b.total_amount - a.total_amount),
+    [roster],
+  );
+
+  // Grand total amount across all salespeople
+  const overall = useMemo(
+    () => transactions.reduce((s, t) => s + t.total_amount, 0),
+    [transactions],
+  );
+
+  // Total invoice count across all salespeople
+  const totalSales = useMemo(
+    () => transactions.reduce((s, t) => s + t.sales_count, 0),
+    [transactions],
+  );
+
+  // ─── Audio ──────────────────────────────────────────────────────────────────
+
   const safePlayAudio = () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -70,6 +158,8 @@ export function Dashboard() {
       audio.addEventListener("canplay", onCanPlay);
     }
   };
+
+  // ─── Effects ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -95,8 +185,8 @@ export function Dashboard() {
         if (res.ok) {
           const raw: Partial<Transaction>[] = await res.json();
           if (!isMountedRef.current) return;
-          console.log("Initial data fetched:", raw.length, "transactions");
-          setTransactions([...raw].reverse().map(normalizeTransaction));
+          console.log("Initial data fetched:", raw.length, "invoices");
+          setRoster(buildRosterFromList([...raw].reverse()));
         } else {
           console.error("Failed to fetch transactions:", res.status);
         }
@@ -109,70 +199,38 @@ export function Dashboard() {
     const setupSocket = () => {
       if (socketRef.current) return;
 
+      console.log("Connecting socket to:", `${API_URL}/socket/leaderboard_updates`);
+
       const socket = io(`${API_URL}/socket/leaderboard_updates`, {
+        transports: ["websocket", "polling"],
+        secure: API_URL.startsWith("https"),
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
-        reconnectionAttempts: 5,
+        reconnectionAttempts: 10,
+        timeout: 5000,
       });
 
-      socket.on("connect", () => console.log("Socket connected"));
+      socket.on("connect", () => console.log("Socket connected:", socket.id));
 
       socket.on("new_transaction", (raw: Partial<Transaction>) => {
         if (!isMountedRef.current) return;
 
-        // Log the raw payload to help diagnose shape differences per source
         console.log("RAW new_transaction payload:", JSON.stringify(raw));
 
-        // Always work with a normalized, fully-shaped object
-        const data = normalizeTransaction(raw);
+        const tx = normalizeTransaction(raw);
 
-        console.log(
-          "Normalized transaction — _id:",
-          data._id,
-          "invoice_id:",
-          data.invoice_id,
-          "source:",
-          data.source,
-        );
+        // Flash banner shows the individual transaction that just arrived
+        setIncoming(tx);
 
-        // Show incoming banner
-        setIncoming(data);
-
-        // Append to list (deduplicate)
-        setTransactions((prev) => {
-          const isDuplicate = prev.some((t) => {
-            // Prefer _id comparison when both sides have it
-            if (t._id && data._id) return t._id === data._id;
-            // Fallback: invoice_id + date (handles sources without _id)
-            return (
-              t.invoice_id === data.invoice_id &&
-              t.date === data.date
-            );
-          });
-
-          if (isDuplicate) {
-            console.log("Duplicate transaction detected, skipping");
-            return prev;
-          }
-
-          const next = [data, ...prev];
-          console.log("Transaction added. Total:", next.length);
-          return next.length > 500 ? next.slice(0, 500) : next;
-        });
+        // Update the roster — existing person gets accumulated, new person gets added
+        setRoster((prev) => mergeIntoRoster(prev, tx));
 
         // Reset banner hide timer
         if (incomingTimer.current) clearTimeout(incomingTimer.current);
 
         // Play sound for large transactions
-        const amountVal = parseAmount(data.amount);
-        console.log(
-          "Amount:",
-          amountVal,
-          "Sound enabled:",
-          soundEnabledRef.current,
-        );
-
+        const amountVal = parseAmount(tx.amount);
         if (soundEnabledRef.current && amountVal >= 10000) {
           safePlayAudio();
         }
@@ -206,19 +264,11 @@ export function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keep ref in sync so the socket handler always reads the latest value
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
   }, [soundEnabled]);
 
-  const overall = useMemo(
-    () =>
-      transactions.reduce(
-        (s, t) => s + parseAmount((t as any).amount),
-        0,
-      ),
-    [transactions],
-  );
+  // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <main
@@ -268,12 +318,12 @@ export function Dashboard() {
             <span className="font-medium">across</span>
             <span className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
               {" "}
-              {transactions.length} sales
+              {totalSales} sales
             </span>
           </p>
         </header>
 
-        {/* Incoming Flash Banner */}
+        {/* Incoming Flash Banner — shows the individual transaction that just arrived */}
         {incoming && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30">
             <div className="mx-auto rounded-full bg-card/80 backdrop-blur border border-white/15 px-5 py-3 flex items-center justify-center gap-3 [box-shadow:0_10px_40px_-10px_rgba(255,255,255,0.18)]">
@@ -290,7 +340,7 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* 3-column sales sections */}
+        {/* 3-column sections — one aggregated row per salesperson */}
         <div className="w-full flex justify-center">
           <FrameScreen transactions={transactions} />
         </div>
