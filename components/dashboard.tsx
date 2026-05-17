@@ -19,20 +19,20 @@ export function Dashboard() {
   );
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const incomingTimer = useRef<ReturnType<typeof setTimeout> | null>(null); // FIX 1: correct timer type
+  const incomingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const soundEnabledRef = useRef(soundEnabled);
-  const isMountedRef = useRef(true); // FIX 2: track mount state to prevent setState on unmounted component
+  const isMountedRef = useRef(true);
 
-  const parseAmount = (v: number | string | undefined) => {
+  const parseAmount = (v: number | string | undefined | null): number => {
     if (v == null) return 0;
-    if (typeof v === "number") return v;
+    if (typeof v === "number") return Number.isFinite(v) ? v : 0;
     const cleaned = String(v).replace(/[^0-9.-]/g, "");
     const parsed = parseFloat(cleaned);
     return Number.isFinite(parsed) ? parsed : 0;
   };
 
-  const formatAmount = (v: number | string | undefined) => {
+  const formatAmount = (v: number | string | undefined | null): string => {
     const num = parseAmount(v);
     return num.toLocaleString("en-IN", {
       minimumFractionDigits: 2,
@@ -40,15 +40,29 @@ export function Dashboard() {
     });
   };
 
-  // FIX 3: safe audio play helper — guards readyState and handles promise rejection cleanly
+  /**
+   * Normalize any incoming transaction payload so that downstream
+   * components always receive a fully-shaped Transaction object,
+   * regardless of which source sent it (SMS, Nest Nepal, Babal Host, …).
+   */
+  const normalizeTransaction = (data: Partial<Transaction>): Transaction => ({
+    // _id is optional — leave undefined rather than coercing to a bad value
+    _id: (data as any)._id ?? undefined,
+    invoice_id: data.invoice_id as string ?? 0,
+    source: data.source ?? "nest" ,
+    admin_id: data.admin_id as string ?? 0 ,
+    admin_name: data.admin_name?.trim() || "Unknown",
+    amount: data.amount ?? 0,
+    date: data.date ?? new Date().toISOString(),
+  });
+
+  /** Guards readyState and swallows unhandled promise rejections from play() */
   const safePlayAudio = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    // readyState >= 2 means HAVE_CURRENT_DATA — safe to play
     if (audio.readyState >= 2) {
       audio.play().catch(() => {});
     } else {
-      // Wait for it to be ready, then play once
       const onCanPlay = () => {
         audio.play().catch(() => {});
         audio.removeEventListener("canplay", onCanPlay);
@@ -65,7 +79,6 @@ export function Dashboard() {
       "your-frontend-encryption-key";
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4001";
 
-    // FIX 4: use AbortController so fetch doesn't call setState after unmount
     const controller = new AbortController();
 
     const fetchTodayData = async () => {
@@ -74,23 +87,22 @@ export function Dashboard() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ frontendEncryptionKey: ENCRYPTION_KEY }),
-          signal: controller.signal, // abort on unmount
+          signal: controller.signal,
         });
 
-        if (!isMountedRef.current) return; // guard after async gap
+        if (!isMountedRef.current) return;
 
         if (res.ok) {
-          const data: Transaction[] = await res.json();
-          if (!isMountedRef.current) return; // guard after second async gap
-          console.log("Initial data fetched:", data.length, "transactions");
-          setTransactions([...data].reverse());
+          const raw: Partial<Transaction>[] = await res.json();
+          if (!isMountedRef.current) return;
+          console.log("Initial data fetched:", raw.length, "transactions");
+          setTransactions([...raw].reverse().map(normalizeTransaction));
         } else {
-          console.error("Failed to fetch transactions", res.status);
+          console.error("Failed to fetch transactions:", res.status);
         }
       } catch (err) {
-        // AbortError is expected on unmount — don't log it as a real error
         if (err instanceof Error && err.name === "AbortError") return;
-        console.error("Error fetching transactions", err);
+        console.error("Error fetching transactions:", err);
       }
     };
 
@@ -106,20 +118,37 @@ export function Dashboard() {
 
       socket.on("connect", () => console.log("Socket connected"));
 
-      socket.on("new_transaction", (data: Transaction) => {
-        if (!isMountedRef.current) return; // FIX 5: guard against post-unmount state updates
+      socket.on("new_transaction", (raw: Partial<Transaction>) => {
+        if (!isMountedRef.current) return;
 
-        console.log("New transaction received:", data);
-        console.log("Transaction _id:", data._id, "invoice_id:", data.invoice_id);
+        // Log the raw payload to help diagnose shape differences per source
+        console.log("RAW new_transaction payload:", JSON.stringify(raw));
 
-        // Update incoming banner
+        // Always work with a normalized, fully-shaped object
+        const data = normalizeTransaction(raw);
+
+        console.log(
+          "Normalized transaction — _id:",
+          data._id,
+          "invoice_id:",
+          data.invoice_id,
+          "source:",
+          data.source,
+        );
+
+        // Show incoming banner
         setIncoming(data);
 
-        // Update transactions list
+        // Append to list (deduplicate)
         setTransactions((prev) => {
           const isDuplicate = prev.some((t) => {
+            // Prefer _id comparison when both sides have it
             if (t._id && data._id) return t._id === data._id;
-            return t.invoice_id === data.invoice_id && t.date === data.date;
+            // Fallback: invoice_id + date (handles sources without _id)
+            return (
+              t.invoice_id === data.invoice_id &&
+              t.date === data.date
+            );
           });
 
           if (isDuplicate) {
@@ -132,24 +161,32 @@ export function Dashboard() {
           return next.length > 500 ? next.slice(0, 500) : next;
         });
 
-        // Clear any existing hide-banner timer
+        // Reset banner hide timer
         if (incomingTimer.current) clearTimeout(incomingTimer.current);
 
-        // Play sound if amount >= 10000
+        // Play sound for large transactions
         const amountVal = parseAmount(data.amount);
-        console.log("Amount:", amountVal, "Sound enabled:", soundEnabledRef.current);
+        console.log(
+          "Amount:",
+          amountVal,
+          "Sound enabled:",
+          soundEnabledRef.current,
+        );
 
         if (soundEnabledRef.current && amountVal >= 10000) {
-          safePlayAudio(); // FIX 6: use safe audio play helper
+          safePlayAudio();
         }
 
-        // Hide incoming banner after 6 seconds
+        // Hide banner after 6 s
         incomingTimer.current = setTimeout(() => {
-          if (isMountedRef.current) setIncoming(null); // FIX 7: guard timer callback too
+          if (isMountedRef.current) setIncoming(null);
         }, 6000);
       });
 
       socket.on("disconnect", () => console.log("Socket disconnected"));
+      socket.on("connect_error", (err) =>
+        console.error("Socket connection error:", err),
+      );
 
       socketRef.current = socket;
     };
@@ -158,7 +195,6 @@ export function Dashboard() {
     setupSocket();
 
     return () => {
-      // FIX 8: full cleanup — fetch abort, timer, socket, mount flag
       isMountedRef.current = false;
       controller.abort();
       if (incomingTimer.current) clearTimeout(incomingTimer.current);
@@ -170,13 +206,17 @@ export function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keep ref in sync with state so socket handler always reads latest value
+  // Keep ref in sync so the socket handler always reads the latest value
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
   }, [soundEnabled]);
 
   const overall = useMemo(
-    () => transactions.reduce((s, t) => s + parseAmount((t as any).amount), 0),
+    () =>
+      transactions.reduce(
+        (s, t) => s + parseAmount((t as any).amount),
+        0,
+      ),
     [transactions],
   );
 
@@ -194,7 +234,7 @@ export function Dashboard() {
         aria-hidden="true"
       />
 
-      {/* Audio — preload so readyState is ready before first play */}
+      {/* Audio — preloaded so readyState is ready before first play */}
       <audio ref={audioRef} preload="auto" src={audioSrc ?? undefined} />
 
       <div className="relative z-10 w-full h-full">
@@ -204,7 +244,7 @@ export function Dashboard() {
             onClick={() => {
               setSoundEnabled(true);
               setShowSoundBtn(false);
-              safePlayAudio(); // FIX 9: use safe play here too
+              safePlayAudio();
             }}
             className="fixed right-8 top-[95%] sm:top-8 bg-primary text-white sm:text-black sm:bg-white/80 backdrop-blur border border-white/20 rounded-full px-4 sm:px-6 py-2 text-sm font-semibold hover:bg-white/90 transition-all duration-200 flex items-center gap-2 hover:scale-105 z-40"
             aria-label="Enable sound"
@@ -239,10 +279,11 @@ export function Dashboard() {
             <div className="mx-auto rounded-full bg-card/80 backdrop-blur border border-white/15 px-5 py-3 flex items-center justify-center gap-3 [box-shadow:0_10px_40px_-10px_rgba(255,255,255,0.18)]">
               <span className="text-sm">
                 <span className="font-semibold text-black">
-                  Rs. {formatAmount(incoming.amount)}
+                  Rs. {formatAmount(incoming.amount ?? 0)}
                 </span>{" "}
                 <span className="text-muted-foreground">
-                  · {incoming.source} · {incoming.admin_name || "Unknown"}
+                  · {incoming.source ?? "unknown"} ·{" "}
+                  {incoming.admin_name ?? "Unknown"}
                 </span>
               </span>
             </div>

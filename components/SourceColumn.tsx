@@ -73,10 +73,12 @@ export function SourceColumn({ source, transactions }: Props) {
   const brand = brandConfig[source];
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
+  console.log("Rendering SourceColumn", { source, transactions });
+
   const groups = useMemo(() => {
     const map = new Map<string, Transaction[]>();
     transactions.forEach((t) => {
-      const key = t.admin_id?.trim() || t.admin_name?.trim().toLowerCase() || t.invoice_id;
+      const key = t.admin_id || t.admin_name?.trim().toLowerCase() || t.invoice_id;
       const arr = map.get(key) ?? [];
       arr.push(t);
       map.set(key, arr);
@@ -141,11 +143,11 @@ export function SourceColumn({ source, transactions }: Props) {
           <>
             <div className={`h-[120px] relative ${brand.heroBg} p-6 rounded-t-xl`}>
               {/* Cover image */}
-              <div className="absolute right-25 z-20 bottom-0">
+              <div className="absolute right-24   z-20 bottom-0">
                 <img
                   src="/logo/cover2.png"
                   alt="Leaderboard"
-                  className="object-contain translate-x-[25%] object-bottom w-[95px]"
+                  className="object-contain translate-x-[25%] -translate-y-[1px] object-bottom w-[95px]"
                 />
               </div>
 
@@ -156,7 +158,7 @@ export function SourceColumn({ source, transactions }: Props) {
                     <img
                       src={imagePath}
                       alt={topSeller.admin_name ?? "Top seller"}
-                      className="object-contain translate-x-[26%] object-bottom h-full w-full"
+                      className="object-contain translate-x-[26%] translate-y-[5px] object-bottom h-full w-full"
                     />
                   ) : (
                     <div
