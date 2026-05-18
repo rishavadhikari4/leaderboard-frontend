@@ -13,11 +13,14 @@ export interface Transaction {
   amount: number | string;
   date: string;
   isNew?: boolean;
+  sales_count?: number;
+  total_amount?: number;
 }
 
 interface Props {
   source: "nest" | "sms" | "babal";
   transactions: Transaction[];
+  detailTransactions?: Transaction[];
 }
 
 const brandConfig = {
@@ -52,6 +55,19 @@ function parseAmount(v: number | string | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function getSaleCount(t: Transaction): number {
+  const count = Number(t.sales_count);
+  if (!Number.isFinite(count) || count < 1) return 1;
+  return Math.floor(count);
+}
+
+function getTxTotalAmount(t: Transaction): number {
+  if (typeof t.total_amount === "number" && Number.isFinite(t.total_amount)) {
+    return t.total_amount;
+  }
+  return parseAmount(t.amount);
+}
+
 function formatAmount(v: number | string | undefined): string {
   return parseAmount(v).toLocaleString("en-IN", {
     minimumFractionDigits: 2,
@@ -68,7 +84,7 @@ function getInitials(name: string): string {
     .join("");
 }
 
-export function SourceColumn({ source, transactions }: Props) {
+export function SourceColumn({ source, transactions, detailTransactions = [] }: Props) {
   const brand = brandConfig[source];
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
@@ -88,17 +104,42 @@ export function SourceColumn({ source, transactions }: Props) {
         admin_id: txs[0].admin_id ?? key,
         admin_name: txs[0].admin_name ?? "Unknown",
         transactions: txs,
-        total: txs.reduce((s, t) => s + parseAmount(t.amount), 0),
+        total: txs.reduce((s, t) => s + getTxTotalAmount(t), 0),
+        salesCount: txs.reduce((s, t) => s + getSaleCount(t), 0),
       }))
       .sort((a, b) => b.total - a.total);
   }, [transactions]);
 
   const columnTotal = useMemo(
-    () => transactions.reduce((s, t) => s + parseAmount(t.amount), 0),
+    () => transactions.reduce((s, t) => s + getTxTotalAmount(t), 0),
+    [transactions],
+  );
+
+  const totalSalesCount = useMemo(
+    () => transactions.reduce((s, t) => s + getSaleCount(t), 0),
     [transactions],
   );
 
   const topSeller = groups[0] ?? null;
+  const detailByAdmin = useMemo(() => {
+    const map = new Map<string, Transaction[]>();
+    detailTransactions.forEach((t) => {
+      const key = String(t.admin_id || t.admin_name || "unknown");
+      const arr = map.get(key) ?? [];
+      arr.push(t);
+      map.set(key, arr);
+    });
+    return map;
+  }, [detailTransactions]);
+
+  const getExpandedRows = (adminId: string, fallback: Transaction[]) => {
+    const rows = detailByAdmin.get(String(adminId));
+    const base = rows && rows.length > 0 ? rows : fallback;
+    return [...base].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+  };
+
   const imagePath = topSeller ? getStaffImage(topSeller.admin_id) : null;
 
   return (
@@ -120,7 +161,7 @@ export function SourceColumn({ source, transactions }: Props) {
           </span>
         </div>
         <span className="text-[#0e0e0e]  whitespace-nowrap">
-          {transactions.length} Sale{transactions.length !== 1 ? "s" : ""} · Today
+          {totalSalesCount} Sale{totalSalesCount !== 1 ? "s" : ""} · Today
         </span>
       </div>
 
@@ -247,7 +288,7 @@ export function SourceColumn({ source, transactions }: Props) {
                   aria-expanded={!!openGroups[topSeller.admin_id]}
                   className={`text-[11px] opacity-70 whitespace-nowrap pt-0.5 bg-transparent border-none cursor-pointer ${brand.heroText}`}
                 >
-                  {topSeller.transactions.length} Sale{topSeller.transactions.length !== 1 ? "s" : ""}{" "}
+                  {topSeller.salesCount} Sale{topSeller.salesCount !== 1 ? "s" : ""}{" "}
                   {openGroups[topSeller.admin_id] ? "▾" : "▸"}
                 </button>
               </div>
@@ -264,16 +305,21 @@ export function SourceColumn({ source, transactions }: Props) {
             {/* Top-seller expanded invoice rows */}
             {openGroups[topSeller.admin_id] && (
               <div className="bg-[#fafafa] border-b border-[#f0f0f0]">
-                {topSeller.transactions.map((t, i) => (
+                {getExpandedRows(topSeller.admin_id, topSeller.transactions).map((t, i) => (
                   <div
                     key={t._id ?? `${t.invoice_id}-${i}`}
-                    className="flex items-center justify-between px-8 py-2 border-b border-[#f0f0f0]"
+                    className="flex items-center justify-between px-8 py-2.5 border-b border-[#f0f0f0]"
                   >
-                    <span className="text-[#0e0e0e]/50 text-[11px] font-mono">
-                      {t.invoice_id.slice(0, 10)} · {new Date(t.date).toLocaleTimeString()}
-                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[#0e0e0e] text-[12px] font-semibold">
+                        Sale {i + 1} · Invoice {t.invoice_id}
+                      </p>
+                      <p className="text-[#0e0e0e]/55 text-[11px]">
+                        Time: {new Date(t.date).toLocaleTimeString()}
+                      </p>
+                    </div>
                     <span className="font-semibold text-[#0e0e0e] text-[13px]">
-                      Rs. {formatAmount(t.amount)}
+                      Rs. {formatAmount(getTxTotalAmount(t))}
                     </span>
                   </div>
                 ))}
@@ -308,7 +354,7 @@ export function SourceColumn({ source, transactions }: Props) {
                       </span>
                     </div>
                     <span className="text-[#0e0e0e]/50 text-lg inline-flex items-center gap-1">
-                      {g.transactions.length} Sale{g.transactions.length !== 1 ? "s" : ""}
+                      {g.salesCount} Sale{g.salesCount !== 1 ? "s" : ""}
                       {showFlame && (
                         <span className="inline-flex leading-none">
                           <img
@@ -335,16 +381,21 @@ export function SourceColumn({ source, transactions }: Props) {
 
                 {isOpen && (
                   <div className="bg-[#fafafa] border-b border-[#f0f0f0]">
-                    {g.transactions.map((t, i) => (
+                    {getExpandedRows(g.admin_id, g.transactions).map((t, i) => (
                       <div
                         key={t._id ?? `${t.invoice_id}-${i}`}
-                        className="flex items-center justify-between px-8 py-2 border-b border-[#f0f0f0]"
+                        className="flex items-center justify-between px-8 py-2.5 border-b border-[#f0f0f0]"
                       >
-                        <span className="text-[#0e0e0e]/50 text-[11px] font-mono">
-                          {t.invoice_id.slice(0, 10)} · {new Date(t.date).toLocaleTimeString()}
-                        </span>
+                        <div className="min-w-0">
+                          <p className="text-[#0e0e0e] text-[12px] font-semibold">
+                            Sale {i + 1} · Invoice {t.invoice_id}
+                          </p>
+                          <p className="text-[#0e0e0e]/55 text-[11px]">
+                            Time: {new Date(t.date).toLocaleTimeString()}
+                          </p>
+                        </div>
                         <span className="font-semibold text-[#0e0e0e] text-[13px]">
-                          Rs. {formatAmount(t.amount)}
+                          Rs. {formatAmount(getTxTotalAmount(t))}
                         </span>
                       </div>
                     ))}

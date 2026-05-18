@@ -22,6 +22,7 @@ export type AggregatedTransaction = Transaction & {
 export function Dashboard() {
   // One entry per salesperson, keyed by admin_id
   const [roster, setRoster] = useState<Map<string, AggregatedTransaction>>(new Map());
+  const [rawTransactions, setRawTransactions] = useState<Transaction[]>([]);
 
   const [incoming, setIncoming] = useState<Transaction | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -54,7 +55,6 @@ export function Dashboard() {
     });
   };
 
-  /** Normalize raw socket/API payload into a fully-shaped Transaction */
   const normalizeTransaction = (data: Partial<Transaction>): Transaction => ({
     _id: (data as any)._id ?? undefined,
     invoice_id: data.invoice_id as string ?? 0,
@@ -186,7 +186,9 @@ export function Dashboard() {
           const raw: Partial<Transaction>[] = await res.json();
           if (!isMountedRef.current) return;
           console.log("Initial data fetched:", raw.length, "invoices");
-          setRoster(buildRosterFromList([...raw].reverse()));
+          const normalized = [...raw].reverse().map(normalizeTransaction);
+          setRawTransactions(normalized);
+          setRoster(buildRosterFromList(normalized));
         } else {
           console.error("Failed to fetch transactions:", res.status);
         }
@@ -225,6 +227,7 @@ export function Dashboard() {
 
         // Update the roster — existing person gets accumulated, new person gets added
         setRoster((prev) => mergeIntoRoster(prev, tx));
+        setRawTransactions((prev) => [tx, ...prev]);
 
         // Reset banner hide timer
         if (incomingTimer.current) clearTimeout(incomingTimer.current);
@@ -342,7 +345,7 @@ export function Dashboard() {
 
         {/* 3-column sections — one aggregated row per salesperson */}
         <div className="w-full flex justify-center">
-          <FrameScreen transactions={transactions} />
+          <FrameScreen transactions={transactions} detailTransactions={rawTransactions} />
         </div>
       </div>
     </main>
