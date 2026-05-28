@@ -7,7 +7,7 @@ export default function Page() {
         alt="Logo"
         className="h-80 rotate-270 sm:rotate-0"
       />
-      <h2 className="text-4xl font-bold text-center sm:text-left">Office ko net ma matrai chalxa</h2>
+      <h2 className="text-4xl font-bold text-center sm:text-left">You are not authorized bro</h2>
     </div>
   )
 }
