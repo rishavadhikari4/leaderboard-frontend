@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react";
 import { io, Socket } from "socket.io-client";
 import { type Transaction } from "./SourceColumn";
 import { FrameScreen } from "./FrameScreen";
+import DashboardDetail from "./dashboardDetail";
 
 import groupBg from "@/public/Group.png";
 
@@ -27,6 +28,7 @@ export function Dashboard() {
   const [incoming, setIncoming] = useState<Transaction | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [showSoundBtn, setShowSoundBtn] = useState(true);
+  const [showDetailPage, setShowDetailPage] = useState(false);
   const [audioSrc] = useState<string | null>(
     process.env.NEXT_PUBLIC_ALERT_SOUND || "/sounds/announcement.mp3",
   );
@@ -111,7 +113,7 @@ export function Dashboard() {
   };
 
   /**
-   * Build initial roster from the today's-invoices list.
+   * Build initial roster from today's invoice list.
    * The REST API returns one row per invoice; we fold them into one row per person.
    */
   const buildRosterFromList = (
@@ -271,6 +273,12 @@ export function Dashboard() {
     soundEnabledRef.current = soundEnabled;
   }, [soundEnabled]);
 
+  useEffect(() => {
+    // Toggle detail/dashboard in a continuous loop every 10s
+    const interval = setInterval(() => setShowDetailPage((s) => !s), 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -290,7 +298,7 @@ export function Dashboard() {
       {/* Audio — preloaded so readyState is ready before first play */}
       <audio ref={audioRef} preload="auto" src={audioSrc ?? undefined} />
 
-      <div className="relative z-10 w-full h-full">
+      <div className="relative z-10 w-full min-h-screen">
         {/* Enable Sound Button */}
         {showSoundBtn && (
           <button
@@ -307,45 +315,63 @@ export function Dashboard() {
           </button>
         )}
 
-        {/* Header */}
-        <header className="py-5 text-center">
-          <h6 className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-bold text-[#0333f9] text-2xl sm:text-4xl tracking-[-0.96px] leading-[normal] whitespace-nowrap">
-            LEADERBOARD
-          </h6>
-          <p className="mt-1 [font-family:'Figtree-Medium',Helvetica] font-normal text-[#0e0e0e] text-fluid-base text-center tracking-tight leading-snug">
-            <span className="font-medium">Rs</span>
-            <span className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
-              {" "}
-              {formatAmount(overall)}{" "}
-            </span>
-            <span className="font-medium">across</span>
-            <span className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
-              {" "}
-              {totalSales} sales
-            </span>
-          </p>
-        </header>
+        <div className="relative min-h-screen overflow-hidden">
+          <div
+            className={`absolute inset-0 w-full h-full transition-transform duration-700 ease-in-out will-change-transform ${
+              showDetailPage ? "-translate-x-full" : "translate-x-0"
+            }`}
+          >
+            <div className="relative z-10 w-full h-full">
+              {/* Header */}
+              <header className="py-5 text-center">
+                <h6 className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-bold text-[#0333f9] text-2xl sm:text-4xl tracking-[-0.96px] leading-[normal] whitespace-nowrap">
+                 DAILY LEADERBOARD
+                </h6>
+                <p className="mt-1 [font-family:'Figtree-Medium',Helvetica] font-normal text-[#0e0e0e] text-fluid-base text-center tracking-tight leading-snug">
+                  <span className="font-medium">Today</span>
+                  <span className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
+                    {" "}
+                    Rs {formatAmount(overall)} {" "}
+                  </span>
+                  <span className="font-medium">from</span>
+                  <span className="[font-family:'Figtree-ExtraBoldItalic',Helvetica] font-extrabold">
+                    {" "}
+                    {totalSales} sales
+                  </span>
+                </p>
+              </header>
 
-        {/* Incoming Flash Banner — shows the individual transaction that just arrived */}
-        {incoming && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30">
-            <div className="mx-auto rounded-full bg-card/80 backdrop-blur border border-white/15 px-5 py-3 flex items-center justify-center gap-3 [box-shadow:0_10px_40px_-10px_rgba(255,255,255,0.18)]">
-              <span className="text-sm">
-                <span className="font-semibold text-black">
-                  Rs. {formatAmount(incoming.amount ?? 0)}
-                </span>{" "}
-                <span className="text-muted-foreground">
-                  · {incoming.source ?? "unknown"} ·{" "}
-                  {incoming.admin_name ?? "Unknown"}
-                </span>
-              </span>
+              {/* Incoming Flash Banner — shows the individual transaction that just arrived */}
+              {incoming && (
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30">
+                  <div className="mx-auto rounded-full bg-card/80 backdrop-blur border border-white/15 px-5 py-3 flex items-center justify-center gap-3 [box-shadow:0_10px_40px_-10px_rgba(255,255,255,0.18)]">
+                    <span className="text-sm">
+                      <span className="font-semibold text-black">
+                        Rs. {formatAmount(incoming.amount ?? 0)}
+                      </span>{" "}
+                      <span className="text-muted-foreground">
+                        · {incoming.source ?? "unknown"} ·{" "}
+                        {incoming.admin_name ?? "Unknown"}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* 3-column sections — one aggregated row per salesperson */}
+              <div className="w-full flex justify-center">
+                <FrameScreen transactions={transactions} detailTransactions={rawTransactions} />
+              </div>
             </div>
           </div>
-        )}
 
-        {/* 3-column sections — one aggregated row per salesperson */}
-        <div className="w-full flex justify-center">
-          <FrameScreen transactions={transactions} detailTransactions={rawTransactions} />
+          <div
+            className={`absolute inset-0 w-full h-full transition-transform duration-700 ease-in-out will-change-transform ${
+              showDetailPage ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
+            <DashboardDetail />
+          </div>
         </div>
       </div>
     </main>
