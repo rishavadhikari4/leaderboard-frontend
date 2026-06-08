@@ -2,6 +2,7 @@
 
 import { getStaffImage } from "@/lib/staffMap";
 import Image from "next/image";
+import { Icon } from "@iconify/react";
 import { useMemo, useState } from "react";
 
 export interface Transaction {
@@ -21,6 +22,10 @@ interface Props {
   source: "nest" | "sms" | "babal";
   transactions: Transaction[];
   detailTransactions?: Transaction[];
+  periodLabel?: string;
+  maxDisplayedSellers?: number;
+  flameForTopN?: number;
+  showMedalsForTopSellers?: boolean;
 }
 
 const brandConfig = {
@@ -84,7 +89,15 @@ function getInitials(name: string): string {
     .join("");
 }
 
-export function SourceColumn({ source, transactions, detailTransactions = [] }: Props) {
+export function SourceColumn({
+  source,
+  transactions,
+  detailTransactions = [],
+  periodLabel,
+  maxDisplayedSellers,
+  flameForTopN,
+  showMedalsForTopSellers,
+}: Props) {
   const brand = brandConfig[source];
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
@@ -121,6 +134,13 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
   );
 
   const topSeller = groups[0] ?? null;
+  const remainingGroups = groups.slice(topSeller ? 1 : 0);
+  const visibleGroups = remainingGroups.slice(0, maxDisplayedSellers ?? remainingGroups.length);
+
+  const topSellerMedal = showMedalsForTopSellers ? (
+    <Icon icon="mdi:medal" width={40} height={40} className="text-amber-400" />
+  ) : null;
+
   const detailByAdmin = useMemo(() => {
     const map = new Map<string, Transaction[]>();
     detailTransactions.forEach((t) => {
@@ -143,10 +163,10 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
   const imagePath = topSeller ? getStaffImage(topSeller.admin_id) : null;
 
   return (
-    <section aria-label={`${brand.label} sales`} className="flex md:scale-95 flex-col w-full relative">
+    <section aria-label={`${brand.label} sales`} className="flex flex-col w-full relative">
 
       {/* ── Header: logo + name + count ── */}
-      <div className="flex items-center justify-between mb-1.5 min-h-[50px] lg:min-h-[70px] relative z-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-1.5 min-h-[50px] lg:min-h-[70px] relative z-0">
         <div className="flex items-center gap-2.5 ">
           <Image
             src={brand.logo}
@@ -160,8 +180,8 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
             {brand.label}
           </span>
         </div>
-        <span className="text-[#0e0e0e]  whitespace-nowrap">
-          {totalSalesCount} Sale{totalSalesCount !== 1 ? "s" : ""} · Today
+        <span className="text-[#0e0e0e] text-sm sm:text-base">
+          {totalSalesCount} Sale{totalSalesCount !== 1 ? "s" : ""} · {periodLabel ?? "Today"}
         </span>
       </div>
 
@@ -181,19 +201,19 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
         {/* ── Hero banner ── */}
         {topSeller ? (
           <>
-            <div className={`h-[120px] relative ${brand.heroBg} p-6 rounded-t-xl`}>
+            <div className={`h-[120px] sm:h-[140px] relative ${brand.heroBg} p-5 sm:p-6 rounded-t-xl overflow-hidden`}>
               {/* Cover image */}
-              <div className="absolute right-24   z-20 bottom-0">
+              <div className="absolute right-4 sm:right-8 md:right-24 z-20 bottom-0">
                 <img
                   src="/logo/cover2.png"
                   alt="Leaderboard"
-                  className="object-contain translate-x-[25%] -translate-y-[1px] object-bottom w-[95px]"
+                  className="object-contain translate-x-[25%] -translate-y-[1px] object-bottom w-[70px] sm:w-[95px]"
                 />
               </div>
 
               {/* Staff photo */}
-              <div className="absolute -bottom-0 -right-0 w-[150px] h-[150px]">
-                <div className="h-full w-full relative overflow-hidden">
+              <div className="absolute -bottom-0 -right-0 w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] md:w-[150px] md:h-[150px]">
+                <div className="h-full w-full relative overflow-hidden rounded-[24px]">
                   {imagePath ? (
                     <img
                       src={imagePath}
@@ -211,10 +231,12 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
               </div>
 
               {/* Crown + name + sales count */}
-              <div className="flex pt-3 items-center gap-4">
-                <h2 className={`text-xl relative font-semibold ${brand.heroText}`}>
-                  <div className="absolute top-0 -translate-y-[100%] left-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="11" viewBox="0 0 18 11" fill="none">
+              <div className="flex flex-col gap-3 pt-3 sm:flex-row sm:items-center sm:gap-4">
+                <div className="flex items-center gap-2">
+                  {topSellerMedal}
+                  <h2 className={`text-lg sm:text-xl relative font-semibold ${brand.heroText}`}>
+                    <div className="absolute top-0 -translate-y-[100%] left-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="11" viewBox="0 0 18 11" fill="none">
                       <g clipPath="url(#clip0_1168_4354)">
                         <path d="M4.92761 2.58789L9.00048 6.90179V9.92111L3.19922 8.15822L4.92761 2.58789Z" fill="url(#paint0_linear_1168_4354)" />
                         <path d="M13.0725 2.58789L9 6.90179V9.92111L14.8013 8.15822L13.0725 2.58789Z" fill="url(#paint1_linear_1168_4354)" />
@@ -277,6 +299,7 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
                   </div>
                   {topSeller.admin_name}
                 </h2>
+              </div>
                 <button
                   type="button"
                   onClick={() =>
@@ -308,7 +331,7 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
                 {getExpandedRows(topSeller.admin_id, topSeller.transactions).map((t, i) => (
                   <div
                     key={t._id ?? `${t.invoice_id}-${i}`}
-                    className="flex items-center justify-between px-8 py-2.5 border-b border-[#f0f0f0]"
+                    className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-8 py-2.5 border-b border-[#f0f0f0]"
                   >
                     <div className="min-w-0">
                       <p className="text-[#0e0e0e] text-[12px] font-semibold">
@@ -334,9 +357,9 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
 
         {/* ── Remaining sellers ── */}
         <div className="overflow-hidden rounded-b-xl">
-          {groups.slice(1).map((g, idx) => {
+          {visibleGroups.map((g, idx) => {
             const isOpen = openGroups[g.admin_id];
-            const showFlame = idx > 4;
+            const showFlame = flameForTopN != null ? idx < flameForTopN : idx > 4;
 
             return (
               <div key={g.key ?? g.admin_id} className="bg-white">
@@ -349,6 +372,11 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
                 >
                   <div className="flex flex-col gap-1 min-w-0">
                     <div className="flex items-center gap-1.5">
+                      {showMedalsForTopSellers && idx === 0 ? (
+                        <Icon icon="mdi:medal" width={24} height={24} className="text-slate-400" />
+                      ) : showMedalsForTopSellers && idx === 1 ? (
+                        <Icon icon="mdi:medal" width={24} height={24} className="text-orange-700" />
+                      ) : null}
                       <span className="font-semibold text-[#0e0e0e] text-[14px] overflow-hidden text-ellipsis whitespace-nowrap">
                         {g.admin_name}
                       </span>
@@ -384,7 +412,7 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
                     {getExpandedRows(g.admin_id, g.transactions).map((t, i) => (
                       <div
                         key={t._id ?? `${t.invoice_id}-${i}`}
-                        className="flex items-center justify-between px-8 py-2.5 border-b border-[#f0f0f0]"
+                        className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-8 py-2.5 border-b border-[#f0f0f0]"
                       >
                         <div className="min-w-0">
                           <p className="text-[#0e0e0e] text-[12px] font-semibold">
