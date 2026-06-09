@@ -181,7 +181,7 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
         {/* ── Hero banner ── */}
         {topSeller ? (
           <>
-            <div className={`h-[120px] relative ${brand.heroBg} p-6 rounded-t-xl`}>
+            <div className={`h-[120px] lg:h-[150px] relative ${brand.heroBg} p-6 rounded-t-xl`}>
               {/* Cover image */}
               <div className="absolute right-24   z-20 bottom-0">
                 <img
@@ -192,7 +192,7 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
               </div>
 
               {/* Staff photo */}
-              <div className="absolute -bottom-0 -right-0 w-[150px] h-[150px]">
+              <div className="absolute -bottom-0 -right-0 w-[150px] h-[150px] xl:w-[180px] xl:h-[180px] ">
                 <div className="h-full w-full relative overflow-hidden">
                   {imagePath ? (
                     <img
