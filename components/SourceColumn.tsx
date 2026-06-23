@@ -328,7 +328,7 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
           </>
         ) : (
           <div className="px-6 py-10 text-center text-[#0e0e0e]/40 text-sm rounded-t-xl bg-white">
-            No sales yet
+           <img src="/spider.png" alt="" className="w-[60%] -translate-x-5 -translate-y-5" />
           </div>
         )}
 
