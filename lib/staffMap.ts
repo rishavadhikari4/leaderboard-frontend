@@ -42,9 +42,10 @@ export const staffImageMap: Record<string, string> = {
   "85": "N_Nischal",
   "1": "Anjel",
   "4": "Anjel",
-  "90":"N_Sneha",
-  "86":"N_Prakash",
-  "91":"N_Neha"
+  "90": "N_Sneha",
+  "86": "N_Prakash",
+  "91": "N_Neha",
+  "39":"N_Yasoda"
 };
 
 /**
