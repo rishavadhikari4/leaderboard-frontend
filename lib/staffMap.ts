@@ -46,7 +46,8 @@ export const staffImageMap: Record<string, string> = {
   "86": "N_Prakash",
   "91": "N_Neha",
   "39":"N_Yasoda",
-  "d9374296-7647-4312-bc23-b1f6b3254060": "N_Saurya"
+  "d9374296-7647-4312-bc23-b1f6b3254060": "N_Saurya",
+  "38":"B_Rispa"
 };
 
 /**
