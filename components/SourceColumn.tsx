@@ -140,7 +140,7 @@ export function SourceColumn({ source, transactions, detailTransactions = [] }: 
     );
   };
 
-  const imagePath = topSeller ? getStaffImage(topSeller.admin_id) : null;
+  const imagePath = topSeller ? getStaffImage(topSeller.admin_id, source) : null;
 
   return (
     <section aria-label={`${brand.label} sales`} className="flex md:scale-95 flex-col w-full relative">

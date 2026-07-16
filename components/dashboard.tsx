@@ -77,8 +77,11 @@ export function Dashboard() {
     prev: Map<string, AggregatedTransaction>,
     tx: Transaction,
   ): Map<string, AggregatedTransaction> => {
-    // Stringify so numeric and string admin_ids both resolve to the same key
-    const key = String(tx.admin_id || tx.admin_name || "unknown");
+    // admin_id is only unique within its own source system (Babal/Nest/SMS each
+    // assign their own ids independently), so two different people from different
+    // sources can share the same admin_id. Key on source + admin_id so their rows
+    // never collide and merge into one another.
+    const key = `${tx.source || "unknown"}:${tx.admin_id || tx.admin_name || "unknown"}`;
     const txAmount = parseAmount(tx.amount);
     const next = new Map(prev);
 
