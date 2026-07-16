@@ -55,12 +55,12 @@ export const staffImageMap: Record<string, string> = {
   "babal:38": "B_Rispa",
 
   // Generic system/admin accounts shared across brands (not tied to one person)
-  "nest:1": "Anjel",
-  "babal:1": "Anjel",
-  "sms:1": "Anjel",
-  "nest:4": "Anjel",
-  "babal:4": "Anjel",
-  "sms:4": "Anjel",
+  "nest:1": "N_Kushal",
+  "babal:1": "N_Kushal",
+  "sms:1": "N_Kushal",
+  "nest:4": "N_Kushal",
+  "babal:4": "N_Kushal",
+  "sms:4": "N_Kushal",
 };
 
 /**
