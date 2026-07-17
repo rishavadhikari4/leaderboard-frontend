@@ -51,7 +51,7 @@ export const staffImageMap: Record<string, string> = {
   "nest:86": "N_Prakash",
   "nest:91": "N_Neha",
   "nest:39": "N_Yasoda",
-  "nest:d9374296-7647-4312-bc23-b1f6b3254060": "N_Saurya",
+  "sms:d9374296-7647-4312-bc23-b1f6b3254060": "N_Saurya",
   "babal:38": "B_Rispa",
 
   // Generic system/admin accounts shared across brands (not tied to one person)
