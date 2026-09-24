@@ -64,6 +64,7 @@ export const staffImageMap: Record<string, string> = {
   "babal:46": "B_Agarata",
   "nest:97":"N_Sahaj",
   "nest:100":"N_Migmar",
+  "nest:101":"N_Saujanya",
 };
 
 /**
