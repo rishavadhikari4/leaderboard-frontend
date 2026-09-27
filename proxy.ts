@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const ALLOWED_IP = process.env.ALLOWED_IP?.trim().toLowerCase();
+const ALLOWED_IP = "27.34.64.15,2400:1a00:4b29:5cf5::10";
+
+const ALLOWED_IPS = new Set(
+  (ALLOWED_IP ?? "")
+    .split(",")
+    .map((ip) => ip.trim().toLowerCase())
+    .filter(Boolean),
+);
 
 function getClientIP(req: NextRequest): string | null {
   const xff = req.headers.get("x-forwarded-for");
@@ -19,13 +26,13 @@ function isAllowedWifiIP(ip: string | null): boolean {
   }
 
   const normalizedIP = ip.replace(/^[[]|[]]$/g, "").toLowerCase();
-  if (!ALLOWED_IP) {
+  if (ALLOWED_IPS.size === 0) {
     return false;
   }
 
   return (
-    normalizedIP === ALLOWED_IP ||
-    normalizedIP === `::ffff:${ALLOWED_IP}`
+    ALLOWED_IPS.has(normalizedIP) ||
+    ALLOWED_IPS.has(normalizedIP.replace(/^::ffff:/, ""))
   );
 }
 
