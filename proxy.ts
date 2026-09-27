@@ -1,17 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-function isPublicAssetPath(pathname: string) {
-  return (
-    pathname.startsWith("/_next/") ||
-    pathname.startsWith("/api/") ||
-    pathname === "/favicon.ico" ||
-    pathname === "/robots.txt" ||
-    pathname === "/sitemap.xml" ||
-    pathname.includes(".")
-  );
-}
-
 function getClientIP(req: NextRequest) {
   const xff = req.headers.get("x-forwarded-for");
 
@@ -25,17 +14,19 @@ function getClientIP(req: NextRequest) {
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  if (pathname === "/not-authorized" || isPublicAssetPath(pathname)) {
+  if (pathname === "/not-authorized") {
     return NextResponse.next();
   }
 
-  const allowedIP = "192.168.1.138";
+  const allowedIPv6 =
+    "2400:1a00:4b29:5cf5::10";
+
   const clientIP = getClientIP(req);
 
-  console.log("Allowed IP:", allowedIP);
   console.log("Client IP:", clientIP);
+  console.log("Allowed IPv6:", allowedIPv6);
 
-  if (!clientIP || clientIP !== allowedIP) {
+  if (!clientIP || clientIP !== allowedIPv6) {
     return NextResponse.redirect(
       new URL("/not-authorized", req.url)
     );
