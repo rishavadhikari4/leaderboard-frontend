@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-function getClientIP(req: NextRequest) {
+function getClientIP(req: NextRequest): string | null {
   const xff = req.headers.get("x-forwarded-for");
 
   if (xff) {
@@ -11,6 +11,40 @@ function getClientIP(req: NextRequest) {
   return req.headers.get("x-real-ip") || null;
 }
 
+function isPrivateNetworkIP(ip: string | null): boolean {
+  if (!ip) {
+    return false;
+  }
+
+  const normalizedIP = ip.replace(/^[[]|[]]$/g, "").toLowerCase();
+
+  if (normalizedIP === "::1" || normalizedIP === "localhost") {
+    return true;
+  }
+
+  const ipv4 = normalizedIP.startsWith("::ffff:")
+    ? normalizedIP.slice(7)
+    : normalizedIP;
+  const octets = ipv4.split(".").map(Number);
+
+  if (
+    octets.length === 4 &&
+    octets.every((octet) => Number.isInteger(octet) && octet >= 0 && octet <= 255)
+  ) {
+    const [first, second] = octets;
+
+    return (
+      first === 10 ||
+      (first === 172 && second >= 16 && second <= 31) ||
+      (first === 192 && second === 168) ||
+      (first === 169 && second === 254) ||
+      first === 127
+    );
+  }
+
+  return normalizedIP.startsWith("fc") || normalizedIP.startsWith("fd") || normalizedIP.startsWith("fe80:");
+}
+
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -18,18 +52,10 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const allowedIPv6 =
-    "2400:1a00:4b29:5cf5::10";
-
   const clientIP = getClientIP(req);
 
-  console.log("Client IP:", clientIP);
-  console.log("Allowed IPv6:", allowedIPv6);
-
-  if (!clientIP || clientIP !== allowedIPv6) {
-    return NextResponse.redirect(
-      new URL("/not-authorized", req.url)
-    );
+  if (!isPrivateNetworkIP(clientIP)) {
+    return NextResponse.redirect(new URL("/not-authorized", req.url));
   }
 
   return NextResponse.next();
@@ -37,6 +63,6 @@ export function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/|api/|not-authorized|favicon.ico|robots.txt|sitemap.xml).*)",
+    "/((?!_next/|not-authorized|favicon.ico|robots.txt|sitemap.xml).*)",
   ],
 };
