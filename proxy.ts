@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const ALLOWED_IP = "10.0.0.174";
+// Public IP of the Wi-Fi network (what the server sees). Comma-separate for multiple.
+const ALLOWED_IP = "124.41.193.165";
 
 const ALLOWED_IPS = new Set(
   (ALLOWED_IP ?? "")
